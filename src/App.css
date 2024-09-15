@@ -2,6 +2,7 @@
 
 :root {
   --PrimaryColor: hsl(94, 59%, 35%);
+  --lightGreen: #47eb41;
   --HoverColor: #bdf094;
   --paleGreen: hsl(96, 75%, 89%);
   --whiteColor: hsl(0, 0%, 100%);
