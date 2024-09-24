@@ -10,7 +10,7 @@ const Logo = () => {
     <div className='d-flex align-items-center justify-content-between'>
       <a href='/' className='logo d-flex align-items-center'>
         <img src={image} alt='logo' />
-        <span className='d-none d-lg-block'>DASHBOARD</span>
+        <span className='d-none d-lg-block'>CrushApp</span>
       </a>
       <i
         className='bi bi-list toggle-sidebar-btn'
