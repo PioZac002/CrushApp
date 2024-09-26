@@ -7,16 +7,52 @@ import ManageWorkers from '../ManageWorkers/ManageWorkers';
 import ManageIntegrators from '../ManageIntegrators/ManageIntegrators';
 import ManageGroups from '../ManageGroups/ManageGroups';
 import Diagrams from '../Diagrams/Diagrams';
+import PrivateRoute from '../PrivateRoute/PrivateRoute';
 
 const MainBody = () => {
   return (
     <main className='main' id='main'>
       <Routes>
-        <Route path='/' element={<Dashboard />} />
-        <Route path='/pracownicy' element={<ManageWorkers />} />
-        <Route path='/integratorzy' element={<ManageIntegrators />} />
-        <Route path='/grupy' element={<ManageGroups />} />
-        <Route path='/wykresy' element={<Diagrams />} />
+        <Route
+          path='/'
+          element={
+            <PrivateRoute allowedRoles={['service', 'manager', 'worker']}>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/pracownicy'
+          element={
+            <PrivateRoute allowedRoles={['service', 'manager']}>
+              <ManageWorkers />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/integratorzy'
+          element={
+            <PrivateRoute allowedRoles={['service', 'manager']}>
+              <ManageIntegrators />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/grupy'
+          element={
+            <PrivateRoute allowedRoles={['service', 'manager']}>
+              <ManageGroups />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/wykresy'
+          element={
+            <PrivateRoute allowedRoles={['service', 'manager']}>
+              <Diagrams />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </main>
   );
