@@ -1,13 +1,12 @@
 // MainBody.jsx
-import PageTitle from './PageTitle/PageTitle';
-import './mainBody.css';
 import { Routes, Route } from 'react-router-dom';
+import PrivateRoute from '../PrivateRoute/PrivateRoute';
 import Dashboard from './Dashboard/Dashboard';
 import ManageWorkers from '../ManageWorkers/ManageWorkers';
 import ManageIntegrators from '../ManageIntegrators/ManageIntegrators';
 import ManageGroups from '../ManageGroups/ManageGroups';
 import Diagrams from '../Diagrams/Diagrams';
-import PrivateRoute from '../PrivateRoute/PrivateRoute';
+import './MainBody.css';
 
 const MainBody = () => {
   return (

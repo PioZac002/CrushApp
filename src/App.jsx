@@ -21,12 +21,20 @@ import './App.css';
 function App() {
   const { user } = useContext(AuthContext);
 
+  // Check if the user is authenticated
+  const isAuthenticated = user && user.id_token;
+
+  // Check if the user is Service or Manager
+  const isServiceOrManager = user?.role?.isService || user?.role?.isManager;
+
   return (
     <Router>
-      {user && user.id_token && (
+      {isAuthenticated && (
         <>
-          <SideBar />
+          {/* Header is always visible after login */}
           <Header />
+          {/* SideBar only for Service and Manager */}
+          {isServiceOrManager && <SideBar />}
         </>
       )}
       <Routes>
