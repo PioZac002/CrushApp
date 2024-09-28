@@ -20,7 +20,6 @@ const Dashboard = () => {
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
 
-  // Pobieranie pracowników od razu po zalogowaniu, niezależnie od roli
   useEffect(() => {
     const fetchWorkers = async () => {
       setLoading(true);
@@ -34,7 +33,6 @@ const Dashboard = () => {
           const workersList = response.data.workers;
           setWorkers(workersList);
 
-          // Jeśli Serwisant, filtruj managerów
           if (isService) {
             const managersList = workersList.filter(
               (worker) => worker.role.isManager && !worker.role.isService
@@ -52,7 +50,6 @@ const Dashboard = () => {
     fetchWorkers();
   }, [user, isService]);
 
-  // Pobieranie integratorów dla wybranego managera przez Serwisanta lub Managera
   useEffect(() => {
     const fetchIntegrators = async () => {
       if (!selectedManagerID && !isManager) return;
@@ -84,7 +81,6 @@ const Dashboard = () => {
     }
   }, [user, selectedManagerID, isManager, isService]);
 
-  // Pobieranie grup integratorów dla wybranego managera przez Serwisanta lub Managera
   useEffect(() => {
     const fetchIntegratorGroups = async () => {
       if (!selectedManagerID && !isManager) return;
@@ -116,64 +112,63 @@ const Dashboard = () => {
     }
   }, [user, selectedManagerID, isManager, isService]);
 
-  // Obsługa zmiany wyboru managera
   const handleManagerChange = (e) => {
     setSelectedManagerID(e.target.value);
   };
 
-  // Renderowanie listy pracowników
   const renderWorkersList = () => (
-    <table className='table'>
-      <thead>
-        <tr>
-          <th>Email</th>
-          <th>Imię</th>
-          <th>Nazwisko</th>
-        </tr>
-      </thead>
-      <tbody>
-        {(showMoreWorkers ? workers : workers.slice(0, 5)).map((worker) => {
-          // Zabezpieczenie przed brakiem `cognitoAttributes` lub jeśli to nie jest tablica
-          if (
-            !worker.cognitoAttributes ||
-            !Array.isArray(worker.cognitoAttributes)
-          ) {
-            return (
-              <tr key={worker.PK}>
-                <td>N/A</td>
-                <td>N/A</td>
-                <td>N/A</td>
-              </tr>
-            );
-          }
-
-          const emailAttr = worker.cognitoAttributes.find(
-            (attr) => attr.Name === 'email'
-          );
-          const givenNameAttr = worker.cognitoAttributes.find(
-            (attr) => attr.Name === 'given_name'
-          );
-          const familyNameAttr = worker.cognitoAttributes.find(
-            (attr) => attr.Name === 'family_name'
-          );
-
-          const email = emailAttr ? emailAttr.Value : 'N/A';
-          const givenName = givenNameAttr ? givenNameAttr.Value : 'N/A';
-          const familyName = familyNameAttr ? familyNameAttr.Value : 'N/A';
-
+    <div className='worker-list'>
+      {(showMoreWorkers ? workers : workers.slice(0, 5)).map((worker) => {
+        if (
+          !worker.cognitoAttributes ||
+          !Array.isArray(worker.cognitoAttributes)
+        ) {
           return (
-            <tr key={worker.PK}>
-              <td>{email}</td>
-              <td>{givenName}</td>
-              <td>{familyName}</td>
-            </tr>
+            <div key={worker.PK} className='row worker-item'>
+              <div className='col-12'>N/A</div>
+            </div>
           );
-        })}
-      </tbody>
-    </table>
+        }
+
+        const givenNameAttr = worker.cognitoAttributes.find(
+          (attr) => attr.Name === 'given_name'
+        );
+        const familyNameAttr = worker.cognitoAttributes.find(
+          (attr) => attr.Name === 'family_name'
+        );
+        const emailAttr = worker.cognitoAttributes.find(
+          (attr) => attr.Name === 'email'
+        );
+
+        const givenName = givenNameAttr ? givenNameAttr.Value : 'N/A';
+        const familyName = familyNameAttr ? familyNameAttr.Value : 'N/A';
+        const email = emailAttr ? emailAttr.Value : 'N/A';
+
+        return (
+          <div
+            key={worker.PK}
+            className='row worker-item align-items-center mb-3'
+          >
+            <div className='col-8'>
+              <strong>
+                {givenName} {familyName}
+              </strong>
+            </div>
+            <div className='col-4 text-end text-muted'>{email}</div>
+          </div>
+        );
+      })}
+      {workers.length > 5 && (
+        <button
+          className='btn btn-link'
+          onClick={() => setShowMoreWorkers(!showMoreWorkers)}
+        >
+          {showMoreWorkers ? 'Pokaż mniej' : 'Pokaż więcej'}
+        </button>
+      )}
+    </div>
   );
 
-  // Renderowanie listy integratorów
   const renderIntegratorList = () => (
     <table className='table'>
       <thead>
@@ -197,7 +192,6 @@ const Dashboard = () => {
     </table>
   );
 
-  // Renderowanie listy grup integratorów
   const renderIntegratorGroups = () => (
     <table className='table'>
       <thead>
@@ -222,9 +216,9 @@ const Dashboard = () => {
 
   return (
     <section className='dashboard section'>
-      <div className='row'>
+      <div className='row mb-4'>
         {isService && (
-          <div className='col-lg-4 mb-4'>
+          <div className='col-lg-12'>
             <Card title='Wybierz Managera' icon='bi bi-person'>
               <select
                 className='form-select'
@@ -239,10 +233,8 @@ const Dashboard = () => {
                   const familyNameAttr = manager.cognitoAttributes.find(
                     (attr) => attr.Name === 'family_name'
                   );
-
                   const givenName = givenNameAttr ? givenNameAttr.Value : '';
                   const familyName = familyNameAttr ? familyNameAttr.Value : '';
-
                   return (
                     <option key={manager.PK} value={manager.PK}>
                       {`${givenName} ${familyName}`}
@@ -253,8 +245,10 @@ const Dashboard = () => {
             </Card>
           </div>
         )}
+      </div>
 
-        <div className='col-lg-12'>
+      <div className='row'>
+        <div className='col-lg-8'>
           <Card title='Lista Integratorów' icon='bi bi-tools'>
             {loading ? <p>Ładowanie...</p> : renderIntegratorList()}
             {integrators.length > 5 && (
@@ -267,6 +261,13 @@ const Dashboard = () => {
             )}
           </Card>
 
+          {/* Dodanie karty Wykresy poniżej listy Integratorów */}
+          <Card title='Wykresy' icon='bi bi-bar-chart'>
+            <p>Tutaj będzie miejsce na wykresy efektywności.</p>
+          </Card>
+        </div>
+
+        <div className='col-lg-4'>
           <Card title='Lista Pracowników' icon='bi bi-people'>
             {loading ? <p>Ładowanie...</p> : renderWorkersList()}
             {workers.length > 5 && (
@@ -289,10 +290,6 @@ const Dashboard = () => {
                 {showMoreGroups ? 'Pokaż mniej' : 'Pokaż więcej'}
               </button>
             )}
-          </Card>
-
-          <Card title='Wykresy' icon='bi bi-bar-chart'>
-            <p>Tutaj będzie miejsce na wykresy efektywności.</p>
           </Card>
         </div>
       </div>
