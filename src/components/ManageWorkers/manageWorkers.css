@@ -1,0 +1,41 @@
+.worker-card {
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bg-light-green {
+  background-color: #d4edda;
+}
+
+.bg-light-pink {
+  background-color: #f8d7da;
+}
+
+.worker-card h5 {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.worker-card p {
+  font-size: 1rem;
+  margin: 5px 0;
+}
+
+.worker-card .btn {
+  margin-top: 10px;
+}
+
+@media (max-width: 576px) {
+  .worker-card {
+    padding: 15px;
+  }
+
+  .worker-card h5 {
+    font-size: 1rem;
+  }
+
+  .worker-card p {
+    font-size: 0.9rem;
+  }
+}

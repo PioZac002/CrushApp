@@ -1,8 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
-import Card from '../MainBody/Dashboard/Card'; // Komponent karty, z którego korzystasz
+import Card from '../MainBody/Dashboard/Card';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
-import { endpoints } from '../../api/api'; // Import ścieżki do pliku z endpointami
+import { endpoints } from '../../api/api';
+import './manageIntegrators.css';
 
 const ManageIntegrators = () => {
   const { user } = useContext(AuthContext);
@@ -14,6 +15,11 @@ const ManageIntegrators = () => {
     location: '',
     serialNumber: '',
   });
+
+  // Filtry
+  const [filterLocation, setFilterLocation] = useState(''); // Lokalizacja
+  const [filterStatus, setFilterStatus] = useState(''); // Status
+  const [filterAvailability, setFilterAvailability] = useState('all'); // Dostępność
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -74,6 +80,24 @@ const ManageIntegrators = () => {
     }
   }, [user, selectedManagerID, isManager, isService]);
 
+  // Filtrowanie integratorów
+  const filteredIntegrators = integrators.filter((integrator) => {
+    const matchesLocation = filterLocation
+      ? integrator.location === filterLocation
+      : true;
+    const matchesStatus = filterStatus
+      ? integrator.status === parseInt(filterStatus, 10)
+      : true;
+    const matchesAvailability =
+      filterAvailability === 'all'
+        ? true
+        : filterAvailability === 'active'
+        ? !integrator.isDeleted
+        : integrator.isDeleted;
+
+    return matchesLocation && matchesStatus && matchesAvailability;
+  });
+
   // Dodawanie nowego integratora
   const handleAddIntegrator = async () => {
     const creatorID = user.userID;
@@ -105,23 +129,22 @@ const ManageIntegrators = () => {
   const handleDeleteIntegrator = async (integratorID) => {
     try {
       const response = await axios.put(
-        endpoints.editIntegrator(user.userID), // Ścieżka do edycji/usuwania integratorów
+        endpoints.editIntegrator(user.userID),
         {
-          userID: isService ? selectedManagerID : user.userID, // ID użytkownika (dla Serwisanta będzie to ID managera)
+          userID: isService ? selectedManagerID : user.userID,
           editData: {
-            isDeleted: true, // Oznaczenie integratora jako usuniętego
-            PK: integratorID, // ID integratora do edycji/usunięcia
+            isDeleted: true,
+            PK: integratorID,
           },
         },
         {
           headers: {
-            Authorization: `Bearer ${user.id_token}`, // Bearer token dla autoryzacji
+            Authorization: `Bearer ${user.id_token}`,
           },
         }
       );
 
       if (response && response.data) {
-        // Aktualizacja stanu - oznaczenie integratora jako usuniętego
         setIntegrators((prev) =>
           prev.map((integrator) =>
             integrator.PK === integratorID
@@ -164,38 +187,93 @@ const ManageIntegrators = () => {
       )}
 
       <h2>Lista Integratorów</h2>
-      <Card title='Integratorzy' icon='bi bi-tools'>
-        {loading ? (
-          <p>Ładowanie...</p>
-        ) : (
-          <table className='table table-striped'>
-            <thead>
-              <tr>
-                <th>Numer seryjny</th>
-                <th>Lokalizacja</th>
-                <th>Akcje</th>
-              </tr>
-            </thead>
-            <tbody>
-              {integrators.map((integrator) => (
-                <tr key={integrator.PK}>
-                  <td>{integrator.serialNumber}</td>
-                  <td>{integrator.location}</td>
-                  <td>
-                    <button
-                      className='btn btn-danger'
-                      onClick={() => handleDeleteIntegrator(integrator.PK)}
-                      disabled={integrator.isDeleted}
-                    >
-                      {integrator.isDeleted ? 'Usunięty' : 'Usuń'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+
+      {/* Filtry */}
+      <div className='filters'>
+        <div className='row'>
+          <div className='col-md-4'>
+            <label htmlFor='location-filter' className='form-label'>
+              Filtruj po Lokalizacji
+            </label>
+            <select
+              id='location-filter'
+              className='form-select'
+              value={filterLocation}
+              onChange={(e) => setFilterLocation(e.target.value)}
+            >
+              <option value=''>Wszystkie lokalizacje</option>
+              {[...new Set(integrators.map((i) => i.location))].map(
+                (location, index) => (
+                  <option key={index} value={location}>
+                    {location}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+          <div className='col-md-4'>
+            <label htmlFor='status-filter' className='form-label'>
+              Filtruj po Statusie
+            </label>
+            <select
+              id='status-filter'
+              className='form-select'
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <option value=''>Wszystkie statusy</option>
+              <option value='0'>0</option>
+              <option value='1'>1</option>
+              <option value='2'>2</option>
+              <option value='3'>3</option>
+            </select>
+          </div>
+          <div className='col-md-4'>
+            <label htmlFor='availability-filter' className='form-label'>
+              Filtruj po Dostępności
+            </label>
+            <select
+              id='availability-filter'
+              className='form-select'
+              value={filterAvailability}
+              onChange={(e) => setFilterAvailability(e.target.value)}
+            >
+              <option value='all'>Wszystkie</option>
+              <option value='active'>Aktywne</option>
+              <option value='deleted'>Usunięte</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <p>Ładowanie...</p>
+      ) : (
+        <div className='integrators-list'>
+          {filteredIntegrators.map((integrator) => (
+            <div key={integrator.PK} className='integrator-card'>
+              <Card
+                title={`Integrator: ${integrator.serialNumber}`}
+                icon='bi bi-tools'
+              >
+                <p>
+                  <strong>Lokalizacja:</strong> {integrator.location}
+                </p>
+                <p>
+                  <strong>Status:</strong> {integrator.status}
+                </p>
+                <button
+                  className='btn btn-danger'
+                  onClick={() => handleDeleteIntegrator(integrator.PK)}
+                  disabled={integrator.isDeleted}
+                >
+                  {integrator.isDeleted ? 'Usunięty' : 'Usuń'}
+                </button>
+              </Card>
+            </div>
+          ))}
+        </div>
+      )}
 
       <h2 className='mt-4'>Dodaj nowy Integrator</h2>
       <form

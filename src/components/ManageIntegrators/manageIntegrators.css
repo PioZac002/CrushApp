@@ -1,0 +1,54 @@
+/* Stylizacja kart integratorów */
+.integrators-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.integrator-card {
+  flex: 1 1 calc(33.333% - 20px);
+  max-width: calc(33.333% - 20px);
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .integrator-card {
+    flex: 1 1 calc(50% - 20px);
+    max-width: calc(50% - 20px);
+  }
+}
+
+@media (max-width: 576px) {
+  .integrator-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+/* Stylizacja formularza */
+.form-label {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.form-control {
+  border-radius: 0.35rem;
+}
+
+.btn-primary {
+  background-color: var(--PrimaryColor);
+  border-color: var(--PrimaryColor);
+}
+
+.btn-primary:hover {
+  background-color: var(--HoverColor);
+  border-color: var(--HoverColor);
+}
+
+.btn-danger {
+  margin-top: 10px;
+}
+.filters {
+  margin-bottom: 20px;
+}
