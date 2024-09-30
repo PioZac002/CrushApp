@@ -1,0 +1,57 @@
+.manage-groups {
+  padding: 20px;
+}
+
+.manager-select,
+.add-group {
+  margin-bottom: 20px;
+}
+
+.group-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.group-card {
+  background: #f5f5f5;
+  padding: 20px;
+  border: 1px solid #ddd;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  width: 300px;
+  border-radius: 8px;
+}
+
+.users-section,
+.integrators-section {
+  margin-top: 15px;
+}
+
+.delete-group {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.add-group input {
+  padding: 8px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-group button {
+  padding: 8px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.add-group button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}

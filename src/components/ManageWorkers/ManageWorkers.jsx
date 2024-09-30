@@ -1,6 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
 import './manageWorkers.css'; // Dodaj stylizację z nowym plikiem CSS
-import Card from '../MainBody/Dashboard/Card';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { endpoints } from '../../api/api';
@@ -24,7 +23,6 @@ const ManageWorkers = () => {
   const [filter, setFilter] = useState('all');
 
   const isService = user?.role?.isService;
-  const isManager = user?.role?.isManager;
 
   // Pobieranie managerów (dla serwisanta)
   useEffect(() => {
@@ -32,13 +30,19 @@ const ManageWorkers = () => {
       const fetchManagers = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(endpoints.getManagers(), {
+          const response = await axios.get(endpoints.getWorkers(user.userID), {
             headers: {
               Authorization: user.id_token,
             },
           });
-          if (response && response.data) {
-            setManagers(response.data.managers);
+
+          if (response && response.data && response.data.workers) {
+            // Filtruj managerów
+            const managerList = response.data.workers.filter(
+              (worker) => worker.role.isManager && !worker.isDeleted
+            );
+            // Aktualizuj stan managerów
+            setManagers(managerList);
           }
         } catch (error) {
           console.error('Błąd podczas pobierania managerów:', error);
@@ -288,11 +292,26 @@ const ManageWorkers = () => {
                   onChange={(e) => setSelectedManagerID(e.target.value)}
                 >
                   <option value=''>-- Wybierz Managera --</option>
-                  {managers.map((manager) => (
-                    <option key={manager.PK} value={manager.PK}>
-                      {manager.given_name} {manager.family_name}
-                    </option>
-                  ))}
+                  {managers.map((manager) => {
+                    const givenNameAttr = manager.cognitoAttributes?.find(
+                      (attr) => attr.Name === 'given_name'
+                    );
+                    const familyNameAttr = manager.cognitoAttributes?.find(
+                      (attr) => attr.Name === 'family_name'
+                    );
+                    const givenName = givenNameAttr
+                      ? givenNameAttr.Value
+                      : 'N/A';
+                    const familyName = familyNameAttr
+                      ? familyNameAttr.Value
+                      : 'N/A';
+
+                    return (
+                      <option key={manager.PK} value={manager.PK}>
+                        {`${givenName} ${familyName}`}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
