@@ -6,16 +6,24 @@ import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { endpoints } from '../../api/api';
+import ToastContainer from '../ToastContainer/ToastContainer';
 
 const Login = () => {
   const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
-
+  const [errorMessage, setErrorMessage] = useState('');
   const [username, setUsername] = useState(''); // Email or username
   const [password, setPassword] = useState('');
   const [session, setSession] = useState('');
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+
+  const showErrorMessage = (message) => {
+    setErrorMessage(message);
+    setTimeout(() => {
+      setErrorMessage('');
+    }, 5000);
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -42,6 +50,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Błąd logowania:', error);
+      showErrorMessage('Nieprawidłowy email lub hasło.');
     }
   };
 
@@ -64,6 +73,7 @@ const Login = () => {
       navigate('/');
     } catch (error) {
       console.error('Błąd podczas pierwszego logowania:', error);
+      showErrorMessage('Wystąpił błąd podczas pierwszego logowania.');
     }
   };
 
@@ -152,6 +162,13 @@ const Login = () => {
           </div>
         )}
       </div>
+      {errorMessage && (
+        <ToastContainer
+          message={errorMessage}
+          onClose={() => setErrorMessage('')}
+          variant='danger'
+        />
+      )}
     </div>
   );
 };

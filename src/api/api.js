@@ -34,4 +34,13 @@ export const endpoints = {
     `${API_BASE_URL_INTEGRATORS}/integratorGroup/${userID}/remove`,
   getGroupDetails: (userID) =>
     `${API_BASE_URL_INTEGRATORS}/integratorGroup/${userID}/fromGroups`,
+  createReport: (requesterID, managerID = '') =>
+    managerID
+      ? `${API_BASE_URL_INTEGRATORS}/report/${requesterID}?managerID=${managerID}`
+      : `${API_BASE_URL_INTEGRATORS}/report/${requesterID}`,
+
+  getAllReports: (userID) => `${API_BASE_URL_INTEGRATORS}/report/${userID}/all`,
+
+  getReportData: (userID, reportID) =>
+    `${API_BASE_URL_INTEGRATORS}/report/${userID}?reportID=${reportID}`,
 };

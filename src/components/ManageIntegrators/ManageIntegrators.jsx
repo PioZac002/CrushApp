@@ -6,6 +6,8 @@ import { endpoints } from '../../api/api';
 import './manageIntegrators.css';
 
 const ManageIntegrators = () => {
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const { user } = useContext(AuthContext);
   const [integrators, setIntegrators] = useState([]);
   const [managers, setManagers] = useState([]);
@@ -15,11 +17,24 @@ const ManageIntegrators = () => {
     location: '',
     serialNumber: '',
   });
-
-  // Filtry
   const [filterLocation, setFilterLocation] = useState(''); // Lokalizacja
   const [filterStatus, setFilterStatus] = useState(''); // Status
   const [filterAvailability, setFilterAvailability] = useState('all'); // Dostępność
+
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => {
+      setSuccessMessage('');
+    }, 5000);
+  };
+
+  const showErrorMessage = (message) => {
+    setErrorMessage(message);
+    setTimeout(() => {
+      setErrorMessage('');
+    }, 5000);
+  };
+  // Filtry
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -119,9 +134,11 @@ const ManageIntegrators = () => {
       if (response && response.data) {
         setIntegrators((prev) => [...prev, response.data]);
         setNewIntegrator({ location: '', serialNumber: '' });
+        showSuccessMessage('Integrator został dodany pomyślnie.');
       }
     } catch (error) {
       console.error('Błąd podczas dodawania integratora:', error);
+      showErrorMessage('Wystąpił błąd podczas dodawania integratora.');
     }
   };
 
@@ -152,9 +169,11 @@ const ManageIntegrators = () => {
               : integrator
           )
         );
+        showSuccessMessage('Integrator został usunięty pomyślnie.');
       }
     } catch (error) {
       console.error('Błąd podczas usuwania integratora:', error);
+      showErrorMessage('Wystąpił błąd podczas usuwania integratora.');
     }
   };
 
@@ -324,6 +343,20 @@ const ManageIntegrators = () => {
           </button>
         </div>
       </form>
+      {successMessage && (
+        <ToastContainer
+          message={successMessage}
+          onClose={() => setSuccessMessage('')}
+          variant='success'
+        />
+      )}
+      {errorMessage && (
+        <ToastContainer
+          message={errorMessage}
+          onClose={() => setErrorMessage('')}
+          variant='danger'
+        />
+      )}
     </div>
   );
 };

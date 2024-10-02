@@ -3,8 +3,11 @@ import './manageWorkers.css'; // Dodaj stylizację z nowym plikiem CSS
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { endpoints } from '../../api/api';
+import ToastContainer from '../ToastContainer/ToastContainer';
 
 const ManageWorkers = () => {
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const { user } = useContext(AuthContext);
   const [workers, setWorkers] = useState([]);
   const [managers, setManagers] = useState([]);
@@ -23,6 +26,22 @@ const ManageWorkers = () => {
   const [filter, setFilter] = useState('all');
 
   const isService = user?.role?.isService;
+
+  // Funkcja do wyświetlania komunikatu sukcesu
+  const showSuccessMessage = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => {
+      setSuccessMessage('');
+    }, 5000);
+  };
+
+  // Funkcja do wyświetlania komunikatu błędu
+  const showErrorMessage = (message) => {
+    setErrorMessage(message);
+    setTimeout(() => {
+      setErrorMessage('');
+    }, 5000);
+  };
 
   // Pobieranie managerów (dla serwisanta)
   useEffect(() => {
@@ -133,9 +152,11 @@ const ManageWorkers = () => {
           phone_number: '',
           address: '',
         });
+        showSuccessMessage('Pracownik został dodany pomyślnie.');
       }
     } catch (error) {
       console.error('Błąd podczas dodawania pracownika:', error);
+      showErrorMessage('Wystąpił błąd podczas dodawania pracownika.');
     }
   };
 
@@ -163,9 +184,11 @@ const ManageWorkers = () => {
             worker.PK === workerID ? { ...worker, isDeleted: true } : worker
           )
         );
+        showSuccessMessage('Pracownik został usunięty pomyślnie.');
       }
     } catch (error) {
       console.error('Błąd podczas usuwania pracownika:', error);
+      showErrorMessage('Wystąpił błąd podczas usuwania pracownika.');
     }
   };
 
@@ -435,6 +458,20 @@ const ManageWorkers = () => {
           );
         })}
       </div>
+      {successMessage && (
+        <ToastContainer
+          message={successMessage}
+          onClose={() => setSuccessMessage('')}
+          variant='success'
+        />
+      )}
+      {errorMessage && (
+        <ToastContainer
+          message={errorMessage}
+          onClose={() => setErrorMessage('')}
+          variant='danger'
+        />
+      )}
     </div>
   );
 };
