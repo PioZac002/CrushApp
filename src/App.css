@@ -1,6 +1,79 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
+  /* Primary Colors */
+  --primary-900: #00730f;
+  --primary-800: #009525;
+  --primary-700: #0daa2f;
+  --primary-600: #35bf39;
+  --primary-500: #46cf41; /* główna wiodąca barwa */
+  --primary-400: #69d760;
+  --primary-300: #88df7e;
+  --primary-200: #ade8a4;
+  --primary-100: #cef2c8;
+  --primary-50: #ebfae9;
+
+  /* Complementary Colors */
+  --complementary-900: #6700a7;
+  --complementary-800: #8900b3;
+  --complementary-700: #9b03ba;
+  --complementary-600: #b009c1;
+  --complementary-500: #bf0cc6;
+  --complementary-400: #ca41cf; /* główna wiodąca barwa */
+  --complementary-300: #d568d8;
+  --complementary-200: #e295e4;
+  --complementary-100: #edc0ee;
+  --complementary-50: #f8e6f8;
+
+  /* Analogous Colors (First Row) */
+  --analogous-900: #2c7411;
+  --analogous-800: #539625;
+  --analogous-700: #68aa2f;
+  --analogous-600: #7dbf39;
+  --analogous-500: #8dcf41; /* główna wiodąca barwa */
+  --analogous-400: #9ed760;
+  --analogous-300: #b1de7e;
+  --analogous-200: #c8e8a4;
+  --analogous-100: #def1c8;
+  --analogous-50: #f2fae9;
+
+  /* Analogous Colors (Second Row) */
+  --analogous2-900: #006419;
+  --analogous2-800: #00842e;
+  --analogous2-700: #009639;
+  --analogous2-600: #00a845;
+  --analogous2-500: #00b84f;
+  --analogous2-400: #00c468;
+  --analogous2-300: #41cf84; /* główna wiodąca barwa */
+  --analogous2-200: #85dca8;
+  --analogous2-100: #b7eaca;
+  --analogous2-50: #e1f7e9;
+
+  /* Triadic Colors (First Row) */
+  --triadic-900: #004f3f;
+  --triadic-800: #006b5e;
+  --triadic-700: #007b6e;
+  --triadic-600: #008b7f;
+  --triadic-500: #00988c;
+  --triadic-400: #00a9a0;
+  --triadic-300: #00bab3;
+  --triadic-200: #41cfca; /* główna wiodąca barwa */
+  --triadic-100: #9ae2df;
+  --triadic-50: #d7f3f3;
+
+  /* Triadic Colors (Second Row) */
+  --triadic2-900: #1b0c9a;
+  --triadic2-800: #2b27ad;
+  --triadic2-700: #3333b8;
+  --triadic2-600: #3c3ec4;
+  --triadic2-500: #4146cf; /* główna wiodąca barwa */
+  --triadic2-400: #5e63d8;
+  --triadic2-300: #7b80df;
+  --triadic2-200: #a1a4e8;
+  --triadic2-100: #c7c8f1;
+  --triadic2-50: #e9e9fa;
+  --background-neutral: #f5f5f5;
+  --border-neutral: #e0e0e0;
   --PrimaryColor: hsl(94, 59%, 35%);
   --lightGreen: #8fe98c;
   --HoverColor: #bdf094;

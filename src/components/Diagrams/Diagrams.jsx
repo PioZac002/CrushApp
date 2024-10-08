@@ -6,21 +6,24 @@ import { AuthContext } from '../../context/AuthContext';
 import { endpoints } from '../../api/api';
 import './diagrams.css';
 
-// Importy dla pickerów dat
+// Import for date pickers
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-// Importy dla wykresów
+// Imports for charts
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import 'chartjs-adapter-date-fns'; // Import adaptera daty
+import 'chartjs-adapter-date-fns';
 
-// Importy dla generowania PDF
+// Imports for generating PDF
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-// Importy dla loadera
+// Import for loader
 import { GridLoader } from 'react-spinners';
+
+// Import for icons
+import { FaTable, FaPlus } from 'react-icons/fa';
 
 const Diagrams = () => {
   const { user } = useContext(AuthContext);
@@ -45,23 +48,34 @@ const Diagrams = () => {
   const [availableIntegrators, setAvailableIntegrators] = useState([]);
   const [availableGroups, setAvailableGroups] = useState([]);
 
+  const [integratorMap, setIntegratorMap] = useState({});
+  const [showTable, setShowTable] = useState(false);
+  const [showCreateReport, setShowCreateReport] = useState(false); // Toggle for creating report
+  const [showAllReports, setShowAllReports] = useState(false); // Toggle for showing all reports
+
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
 
   useEffect(() => {
-    // Pobieranie raportów
+    // Fetch reports
     const fetchReports = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(endpoints.getAllReports(user.userID), {
+        const requesterID =
+          isService && selectedManagerID ? selectedManagerID : user.userID;
+        const response = await axios.get(endpoints.getAllReports(requesterID), {
           headers: {
             Authorization: user.id_token,
           },
         });
         if (response && response.data) {
-          const reportIDsArray = response.data.map(
-            (item) => item.SK.substring(7) // Usunięcie prefiksu 'report#'
-          );
+          const reportIDsArray = response.data.map((item) => {
+            // Extract the report name from SK
+            const reportID = item.SK.substring(7); // Remove 'report#' prefix
+            const skParts = reportID.split('/');
+            const reportName = skParts[skParts.length - 1] || 'Bez nazwy';
+            return { reportID, reportName };
+          });
           setReports(reportIDsArray);
         }
       } catch (error) {
@@ -72,10 +86,10 @@ const Diagrams = () => {
     };
 
     fetchReports();
-  }, [user]);
+  }, [user, isService, selectedManagerID]);
 
   useEffect(() => {
-    // Pobieranie managerów dla serwisanta
+    // Fetch managers for service role
     if (isService) {
       const fetchManagers = async () => {
         try {
@@ -100,7 +114,7 @@ const Diagrams = () => {
   }, [user, isService]);
 
   useEffect(() => {
-    // Pobieranie dostępnych integratorów i grup
+    // Fetch available integrators and groups
     const fetchAvailableIntegrators = async () => {
       try {
         const creatorID = user.userID;
@@ -115,6 +129,13 @@ const Diagrams = () => {
         );
         if (response && response.data) {
           setAvailableIntegrators(response.data.integrators || []);
+          // Create a map of integrator IDs to serial numbers
+          const integratorMapTemp = {};
+          response.data.integrators.forEach((integrator) => {
+            integratorMapTemp[integrator.PK.replace('integrator#', '')] =
+              integrator.serialNumber;
+          });
+          setIntegratorMap(integratorMapTemp);
         }
       } catch (error) {
         console.error('Błąd podczas pobierania integratorów:', error);
@@ -175,10 +196,13 @@ const Diagrams = () => {
       });
 
       if (response && response.data) {
-        // Raport został pomyślnie utworzony
-        // Dodaj nowy raport do listy
-        setReports([...reports, response.data.reportID]);
-        // Wyczyść pola formularza
+        // Report successfully created
+        // Add new report to the list
+        setReports([
+          ...reports,
+          { reportID: response.data.reportID, reportName },
+        ]);
+        // Clear form fields
         setReportName('');
         setDataEntries([
           {
@@ -188,6 +212,7 @@ const Diagrams = () => {
             isGroup: false,
           },
         ]);
+        setShowCreateReport(false); // Hide the create report form
         alert('Raport został pomyślnie utworzony.');
       }
     } catch (error) {
@@ -199,8 +224,10 @@ const Diagrams = () => {
   const fetchReportData = async (reportID) => {
     setLoading(true);
     try {
+      const requesterID =
+        isService && selectedManagerID ? selectedManagerID : user.userID;
       const response = await axios.get(
-        endpoints.getReportData(user.userID, reportID),
+        endpoints.getReportData(requesterID, reportID),
         {
           headers: {
             Authorization: user.id_token,
@@ -208,8 +235,8 @@ const Diagrams = () => {
         }
       );
       if (response && response.data) {
-        // Przetwarzanie danych zgodnie z formatem API
-        // Odpowiedź to tablica tablic: [ [ "integrator#ID", [ dataPoints ] ], ... ]
+        // Process the response data according to the API format
+        // Response is an array of arrays: [ [ "integrator#ID", [ dataPoints ] ], ... ]
         const processedData = response.data.map((item) => {
           const [key, dataPoints] = item;
           const integratorID = key.replace('integrator#', '');
@@ -258,165 +285,235 @@ const Diagrams = () => {
 
   const generatePDF = () => {
     const input = document.getElementById('report-content');
-    html2canvas(input).then((canvas) => {
+    const scale = 2; // Increase scale for better quality
+
+    html2canvas(input, { scale }).then((canvas) => {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
       });
-      const imgWidth = pdf.internal.pageSize.getWidth();
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
       pdf.save(`${selectedReportID}.pdf`);
     });
   };
 
+  const toggleTable = () => {
+    setShowTable(!showTable);
+  };
+
+  const toggleCreateReport = () => {
+    setShowCreateReport(!showCreateReport);
+  };
+
+  const toggleShowAllReports = () => {
+    setShowAllReports(!showAllReports);
+  };
+
   return (
-    <div className='diagrams'>
-      <h2>Generowanie Raportów</h2>
-      {/* Formularz do tworzenia nowego raportu */}
-      <div className='create-report'>
-        <h3>Stwórz nowy raport</h3>
-        {isService && (
-          <div className='form-group'>
-            <label>Wybierz Managera:</label>
-            <select
-              value={selectedManagerID}
-              onChange={(e) => setSelectedManagerID(e.target.value)}
-            >
-              <option value=''>-- Wybierz Managera --</option>
-              {managers.map((manager) => {
-                const givenName = manager.cognitoAttributes.find(
-                  (attr) => attr.Name === 'given_name'
-                )?.Value;
-                const familyName = manager.cognitoAttributes.find(
-                  (attr) => attr.Name === 'family_name'
-                )?.Value;
-                return (
-                  <option key={manager.PK} value={manager.PK}>
-                    {`${givenName} ${familyName}`}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        )}
-        <div className='form-group'>
-          <label>Nazwa Raportu:</label>
-          <input
-            type='text'
-            value={reportName}
-            onChange={(e) => setReportName(e.target.value)}
-          />
-        </div>
-        <h4>Wybierz dane:</h4>
-        {dataEntries.map((entry, index) => (
-          <div key={index} className='data-entry'>
-            <div className='form-group'>
-              <label>Wybierz Integrator lub Grupę:</label>
-              <select
-                value={entry.PK}
-                onChange={(e) =>
-                  handleDataEntryChange(index, 'PK', e.target.value)
-                }
-              >
-                <option value=''>-- Wybierz --</option>
-                <optgroup label='Integratory'>
-                  {availableIntegrators.map((integrator) => (
-                    <option key={integrator.PK} value={integrator.PK}>
-                      {integrator.serialNumber} - {integrator.location}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label='Grupy'>
-                  {availableGroups.map((group) => (
-                    <option key={group.PK} value={group.PK}>
-                      {group.integratorGroupName}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-              <label>
-                <input
-                  type='checkbox'
-                  checked={entry.isGroup}
-                  onChange={(e) =>
-                    handleDataEntryChange(index, 'isGroup', e.target.checked)
-                  }
-                />
-                To jest Grupa
-              </label>
-            </div>
-            <div className='form-group'>
-              <label>Data Początkowa:</label>
-              <DatePicker
-                selected={entry.RangeStart}
-                onChange={(date) =>
-                  handleDataEntryChange(index, 'RangeStart', date)
-                }
-                selectsStart
-                startDate={entry.RangeStart}
-                endDate={entry.RangeEnd}
-                dateFormat='yyyy-MM-dd'
-              />
-            </div>
-            <div className='form-group'>
-              <label>Data Końcowa:</label>
-              <DatePicker
-                selected={entry.RangeEnd}
-                onChange={(date) =>
-                  handleDataEntryChange(index, 'RangeEnd', date)
-                }
-                selectsEnd
-                startDate={entry.RangeStart}
-                endDate={entry.RangeEnd}
-                minDate={entry.RangeStart}
-                dateFormat='yyyy-MM-dd'
-              />
-            </div>
-            <button onClick={() => removeDataEntry(index)}>Usuń</button>
-          </div>
-        ))}
-        <button onClick={addDataEntry}>Dodaj Kolejny</button>
-        <button
-          onClick={handleCreateReport}
-          disabled={!reportName || (isService && !selectedManagerID)}
-        >
-          Stwórz Raport
-        </button>
+    <div className='diagrams-container'>
+      <div className='diagrams-header'>
+        <h2>Wykresy i raporty</h2>
+        <FaPlus className='diagrams-add-icon' onClick={toggleCreateReport} />
       </div>
 
-      {/* Lista istniejących raportów */}
-      <div className='existing-reports'>
+      {/* Form to create a new report */}
+      {showCreateReport && (
+        <div className='diagrams-create-report'>
+          <h3>Stwórz nowy raport</h3>
+          {isService && (
+            <div className='diagrams-form-group'>
+              <label>Wybierz Managera:</label>
+              <select
+                value={selectedManagerID}
+                onChange={(e) => setSelectedManagerID(e.target.value)}
+              >
+                <option value=''>-- Wybierz Managera --</option>
+                {managers.map((manager) => {
+                  const givenName = manager.cognitoAttributes.find(
+                    (attr) => attr.Name === 'given_name'
+                  )?.Value;
+                  const familyName = manager.cognitoAttributes.find(
+                    (attr) => attr.Name === 'family_name'
+                  )?.Value;
+                  return (
+                    <option key={manager.PK} value={manager.PK}>
+                      {`${givenName} ${familyName}`}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
+          <div className='diagrams-form-group'>
+            <label>Nazwa Raportu:</label>
+            <input
+              type='text'
+              value={reportName}
+              onChange={(e) => setReportName(e.target.value)}
+            />
+          </div>
+          <h4>Wybierz dane:</h4>
+          {dataEntries.map((entry, index) => (
+            <div key={index} className='diagrams-data-entry'>
+              <div className='diagrams-form-group'>
+                <label>Wybierz Integrator lub Grupę:</label>
+                <select
+                  value={entry.PK}
+                  onChange={(e) =>
+                    handleDataEntryChange(index, 'PK', e.target.value)
+                  }
+                >
+                  <option value=''>-- Wybierz --</option>
+                  <optgroup label='Integratory'>
+                    {availableIntegrators.map((integrator) => (
+                      <option key={integrator.PK} value={integrator.PK}>
+                        {integrator.serialNumber} - {integrator.location}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label='Grupy'>
+                    {availableGroups.map((group) => (
+                      <option key={group.PK} value={group.PK}>
+                        {group.integratorGroupName}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <label>
+                  <input
+                    type='checkbox'
+                    checked={entry.isGroup}
+                    onChange={(e) =>
+                      handleDataEntryChange(index, 'isGroup', e.target.checked)
+                    }
+                  />
+                  To jest Grupa
+                </label>
+              </div>
+              <div className='diagrams-form-group'>
+                <label>Data Początkowa:</label>
+                <DatePicker
+                  selected={entry.RangeStart}
+                  onChange={(date) =>
+                    handleDataEntryChange(index, 'RangeStart', date)
+                  }
+                  selectsStart
+                  startDate={entry.RangeStart}
+                  endDate={entry.RangeEnd}
+                  dateFormat='yyyy-MM-dd'
+                />
+              </div>
+              <div className='diagrams-form-group'>
+                <label>Data Końcowa:</label>
+                <DatePicker
+                  selected={entry.RangeEnd}
+                  onChange={(date) =>
+                    handleDataEntryChange(index, 'RangeEnd', date)
+                  }
+                  selectsEnd
+                  startDate={entry.RangeStart}
+                  endDate={entry.RangeEnd}
+                  minDate={entry.RangeStart}
+                  dateFormat='yyyy-MM-dd'
+                />
+              </div>
+              <button onClick={() => removeDataEntry(index)}>Usuń</button>
+            </div>
+          ))}
+          <button onClick={addDataEntry}>Dodaj Kolejny</button>
+          <button
+            onClick={handleCreateReport}
+            disabled={!reportName || (isService && !selectedManagerID)}
+          >
+            Stwórz Raport
+          </button>
+        </div>
+      )}
+
+      {/* List of existing reports */}
+      <div className='diagrams-existing-reports'>
         <h3>Istniejące Raporty</h3>
         {reports.length > 0 ? (
-          <ul>
-            {reports.map((reportID) => (
-              <li key={reportID}>
-                <button onClick={() => handleSelectReport(reportID)}>
-                  {reportID}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul>
+              {reports
+                .slice(0, showAllReports ? reports.length : 5)
+                .map(({ reportID, reportName }) => (
+                  <li key={reportID}>
+                    <button onClick={() => handleSelectReport(reportID)}>
+                      {reportName}
+                    </button>
+                  </li>
+                ))}
+            </ul>
+            {reports.length > 5 && (
+              <button onClick={toggleShowAllReports}>
+                {showAllReports ? 'Pokaż mniej' : 'Pokaż więcej'}
+              </button>
+            )}
+          </>
         ) : (
           <p>Brak dostępnych raportów.</p>
         )}
       </div>
 
-      {/* Wyświetlanie danych wybranego raportu */}
+      {/* Displaying selected report data */}
       {selectedReportID && (
-        <div className='report-details'>
-          <h3>Dane Raportu: {selectedReportID}</h3>
+        <div className='diagrams-report-details'>
+          <div className='diagrams-report-header'>
+            <h3>
+              Dane Raportu:{' '}
+              {reports.find((r) => r.reportID === selectedReportID)?.reportName}
+            </h3>
+            <FaTable className='diagrams-table-icon' onClick={toggleTable} />
+          </div>
           {loading ? (
-            <div className='loader-container'>
+            <div className='diagrams-loader-container'>
               <GridLoader color='#1cb726' />
             </div>
           ) : (
             <div id='report-content'>
-              {/* Wyświetlanie wykresów */}
+              {/* Displaying efficiency tables */}
+              {showTable && (
+                <div className='diagrams-efficiency-table'>
+                  {reportData.map((dataEntry, index) => (
+                    <div key={index} className='diagrams-table-container'>
+                      <h4>
+                        Integrator:{' '}
+                        {integratorMap[dataEntry.integratorID] ||
+                          dataEntry.integratorID}
+                      </h4>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Data i Czas</th>
+                            <th>Efektywność</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dataEntry.dataPoints.map((point, idx) => (
+                            <tr key={idx}>
+                              <td>{new Date(point.SK).toLocaleString()}</td>
+                              <td>{point.totalCrushed}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Displaying charts */}
               {reportData.map((dataEntry, index) => (
-                <div key={index} className='chart-container'>
-                  <h4>Integrator: {dataEntry.integratorID}</h4>
+                <div key={index} className='diagrams-chart-container'>
+                  <h4>
+                    Integrator:{' '}
+                    {integratorMap[dataEntry.integratorID] ||
+                      dataEntry.integratorID}
+                  </h4>
                   <Line
                     data={{
                       labels: dataEntry.dataPoints.map(
@@ -429,8 +526,8 @@ const Diagrams = () => {
                             (point) => point.totalCrushed
                           ),
                           fill: false,
-                          backgroundColor: 'blue',
-                          borderColor: 'blue',
+                          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                          borderColor: 'rgba(54, 162, 235, 1)',
                         },
                       ],
                     }}
