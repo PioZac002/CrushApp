@@ -1,6 +1,6 @@
 // src/components/Login/Login.jsx
 import React, { useState, useContext } from 'react';
-import './Login.css';
+import './login.css';
 import Logo from '../../assets/images/logoKruszarka.png';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';

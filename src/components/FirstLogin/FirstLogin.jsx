@@ -1,7 +1,7 @@
 // src/components/FirstLogin/FirstLogin.jsx
 
 import React, { useState, useContext } from 'react';
-import './FirstLogin.css';
+import './firstLogin.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { endpoints } from '../../api/api';

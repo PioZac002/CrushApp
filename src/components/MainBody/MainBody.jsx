@@ -6,7 +6,7 @@ import ManageWorkers from '../ManageWorkers/ManageWorkers';
 import ManageIntegrators from '../ManageIntegrators/ManageIntegrators';
 import ManageGroups from '../ManageGroups/ManageGroups';
 import Diagrams from '../Diagrams/Diagrams';
-import './MainBody.css';
+import './mainBody.css';
 
 const MainBody = () => {
   return (

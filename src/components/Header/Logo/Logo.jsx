@@ -1,7 +1,7 @@
 // src/components/Header/Logo/Logo.jsx
 import React, { useContext } from 'react';
 import image from '../../../assets/images/logoKruszarka.png';
-import './Logo.css';
+import './logo.css';
 import { AuthContext } from '../../../context/AuthContext';
 
 const Logo = () => {

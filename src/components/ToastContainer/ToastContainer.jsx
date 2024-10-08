@@ -1,7 +1,7 @@
 // src/components/ToastContainer/ToastContainer.jsx
 import React from 'react';
 import { Toast } from 'react-bootstrap';
-import './ToastContainer.css';
+import './toastContainer.css';
 
 const ToastContainer = ({ message, onClose, variant }) => {
   return (
