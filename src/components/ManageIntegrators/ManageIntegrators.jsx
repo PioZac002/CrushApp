@@ -1,9 +1,15 @@
-import React, { useContext, useState, useEffect } from 'react';
-import Card from '../MainBody/Dashboard/Card';
+// src/components/ManageIntegrators/ManageIntegrators.jsx
+
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
 import { endpoints } from '../../api/api';
 import './manageIntegrators.css';
+import ToastContainer from '../ToastContainer/ToastContainer';
+import { FaCog, FaSearch } from 'react-icons/fa';
+import { PiCaretCircleDownFill, PiCaretCircleUpFill } from 'react-icons/pi';
+import { TiDeleteOutline } from 'react-icons/ti';
+import { GridLoader } from 'react-spinners';
 
 const ManageIntegrators = () => {
   const [successMessage, setSuccessMessage] = useState('');
@@ -20,6 +26,15 @@ const ManageIntegrators = () => {
   const [filterLocation, setFilterLocation] = useState(''); // Lokalizacja
   const [filterStatus, setFilterStatus] = useState(''); // Status
   const [filterAvailability, setFilterAvailability] = useState('all'); // Dostępność
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddIntegratorForm, setShowAddIntegratorForm] = useState(false);
+  const [expandedIntegrators, setExpandedIntegrators] = useState([]);
+  const [showOptionsIntegratorId, setShowOptionsIntegratorId] = useState(null);
+  const optionsMenuRef = useRef(null);
+  const integratorsListRef = useRef(null);
+
+  const isService = user?.role?.isService;
+  const isManager = user?.role?.isManager;
 
   const showSuccessMessage = (message) => {
     setSuccessMessage(message);
@@ -34,10 +49,6 @@ const ManageIntegrators = () => {
       setErrorMessage('');
     }, 5000);
   };
-  // Filtry
-
-  const isService = user?.role?.isService;
-  const isManager = user?.role?.isManager;
 
   // Pobieranie managerów (jeśli użytkownik to Serwisant)
   useEffect(() => {
@@ -52,7 +63,7 @@ const ManageIntegrators = () => {
           });
           if (response && response.data && response.data.workers) {
             const managerList = response.data.workers.filter(
-              (worker) => worker.role.isManager && !worker.role.isService
+              (worker) => worker.role.isManager && !worker.isDeleted
             );
             setManagers(managerList);
           }
@@ -96,22 +107,28 @@ const ManageIntegrators = () => {
   }, [user, selectedManagerID, isManager, isService]);
 
   // Filtrowanie integratorów
-  const filteredIntegrators = integrators.filter((integrator) => {
-    const matchesLocation = filterLocation
-      ? integrator.location === filterLocation
-      : true;
-    const matchesStatus = filterStatus
-      ? integrator.status === parseInt(filterStatus, 10)
-      : true;
-    const matchesAvailability =
-      filterAvailability === 'all'
-        ? true
-        : filterAvailability === 'active'
-        ? !integrator.isDeleted
-        : integrator.isDeleted;
+  const filteredIntegrators = integrators
+    .filter((integrator) => {
+      const matchesLocation = filterLocation
+        ? integrator.location === filterLocation
+        : true;
+      const matchesStatus = filterStatus
+        ? integrator.status === parseInt(filterStatus, 10)
+        : true;
+      const matchesAvailability =
+        filterAvailability === 'all'
+          ? true
+          : filterAvailability === 'active'
+          ? !integrator.isDeleted
+          : integrator.isDeleted;
 
-    return matchesLocation && matchesStatus && matchesAvailability;
-  });
+      return matchesLocation && matchesStatus && matchesAvailability;
+    })
+    .filter((integrator) => {
+      const searchString =
+        `${integrator.serialNumber} ${integrator.location}`.toLowerCase();
+      return searchString.includes(searchTerm.toLowerCase());
+    });
 
   // Dodawanie nowego integratora
   const handleAddIntegrator = async () => {
@@ -134,6 +151,7 @@ const ManageIntegrators = () => {
       if (response && response.data) {
         setIntegrators((prev) => [...prev, response.data]);
         setNewIntegrator({ location: '', serialNumber: '' });
+        setShowAddIntegratorForm(false); // Ukryj formularz po dodaniu integratora
         showSuccessMessage('Integrator został dodany pomyślnie.');
       }
     } catch (error) {
@@ -177,13 +195,78 @@ const ManageIntegrators = () => {
     }
   };
 
+  // Funkcja obsługująca wyświetlanie opcji (koło zębatego)
+  const toggleOptions = (integratorID) => {
+    if (showOptionsIntegratorId === integratorID) {
+      setShowOptionsIntegratorId(null);
+    } else {
+      setShowOptionsIntegratorId(integratorID);
+    }
+  };
+
+  // Zamykanie menu opcji po kliknięciu poza nim
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        optionsMenuRef.current &&
+        !optionsMenuRef.current.contains(event.target)
+      ) {
+        setShowOptionsIntegratorId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Funkcja obsługująca rozwijanie/zwijanie szczegółów integratora
+  const toggleIntegratorDetails = (integratorID) => {
+    if (expandedIntegrators.includes(integratorID)) {
+      setExpandedIntegrators(
+        expandedIntegrators.filter((id) => id !== integratorID)
+      );
+    } else {
+      setExpandedIntegrators([...expandedIntegrators, integratorID]);
+    }
+  };
+
+  // Zamykanie rozwiniętych integratorów po kliknięciu poza listę
+  useEffect(() => {
+    const handleClickOutsideIntegrators = (event) => {
+      if (
+        integratorsListRef.current &&
+        !integratorsListRef.current.contains(event.target)
+      ) {
+        setExpandedIntegrators([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutsideIntegrators);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideIntegrators);
+    };
+  }, []);
+
+  // Funkcja obsługująca akcje z menu opcji
+  const handleOptionSelect = (integratorID, action) => {
+    // Placeholder for future logic to change status
+    if (action === 'changeStatus') {
+      console.log(`Change status of integrator ${integratorID}`);
+      // Implement status change logic here
+    }
+    setShowOptionsIntegratorId(null);
+  };
+
   return (
-    <div className='container mt-5'>
+    <div className='manage-integrators-container'>
       {isService && (
-        <div className='mb-4'>
-          <h2>Wybierz Managera</h2>
+        <div className='manager-select'>
+          <label htmlFor='manager'>Wybierz Managera:</label>
           <select
-            className='form-select'
+            id='manager'
             value={selectedManagerID}
             onChange={(e) => setSelectedManagerID(e.target.value)}
           >
@@ -205,144 +288,200 @@ const ManageIntegrators = () => {
         </div>
       )}
 
-      <h2>Lista Integratorów</h2>
+      {/* Górny pasek z przyciskiem dodawania integratora, filtrem i wyszukiwaniem */}
+      <div className='top-bar-integrators'>
+        <div className='add-integrator-toggle'>
+          <button
+            onClick={() => setShowAddIntegratorForm(!showAddIntegratorForm)}
+          >
+            {showAddIntegratorForm ? 'Anuluj' : 'Dodaj nowy Integrator'}
+          </button>
+        </div>
 
-      {/* Filtry */}
-      <div className='filters'>
-        <div className='row'>
-          <div className='col-md-4'>
-            <label htmlFor='location-filter' className='form-label'>
-              Filtruj po Lokalizacji
-            </label>
-            <select
-              id='location-filter'
-              className='form-select'
-              value={filterLocation}
-              onChange={(e) => setFilterLocation(e.target.value)}
-            >
-              <option value=''>Wszystkie lokalizacje</option>
-              {[...new Set(integrators.map((i) => i.location))].map(
-                (location, index) => (
-                  <option key={index} value={location}>
-                    {location}
-                  </option>
-                )
-              )}
-            </select>
-          </div>
-          <div className='col-md-4'>
-            <label htmlFor='status-filter' className='form-label'>
-              Filtruj po Statusie
-            </label>
-            <select
-              id='status-filter'
-              className='form-select'
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value=''>Wszystkie statusy</option>
-              <option value='0'>0</option>
-              <option value='1'>1</option>
-              <option value='2'>2</option>
-              <option value='3'>3</option>
-            </select>
-          </div>
-          <div className='col-md-4'>
-            <label htmlFor='availability-filter' className='form-label'>
-              Filtruj po Dostępności
-            </label>
-            <select
-              id='availability-filter'
-              className='form-select'
-              value={filterAvailability}
-              onChange={(e) => setFilterAvailability(e.target.value)}
-            >
-              <option value='all'>Wszystkie</option>
-              <option value='active'>Aktywne</option>
-              <option value='deleted'>Usunięte</option>
-            </select>
-          </div>
+        {/* Filtry */}
+        <div className='filters-integrators'>
+          <select
+            className='form-select'
+            value={filterLocation}
+            onChange={(e) => setFilterLocation(e.target.value)}
+          >
+            <option value=''>Wszystkie lokalizacje</option>
+            {[...new Set(integrators.map((i) => i.location))].map(
+              (location, index) => (
+                <option key={index} value={location}>
+                  {location}
+                </option>
+              )
+            )}
+          </select>
+          <select
+            className='form-select'
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value=''>Wszystkie statusy</option>
+            <option value='0'>0</option>
+            <option value='1'>1</option>
+            <option value='2'>2</option>
+            <option value='3'>3</option>
+          </select>
+          <select
+            className='form-select'
+            value={filterAvailability}
+            onChange={(e) => setFilterAvailability(e.target.value)}
+          >
+            <option value='all'>Wszystkie</option>
+            <option value='active'>Aktywne</option>
+            <option value='deleted'>Usunięte</option>
+          </select>
+        </div>
+
+        {/* Wyszukiwanie integratorów */}
+        <div className='search-bar-integrators'>
+          <input
+            type='text'
+            placeholder='Szukaj integratora...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className='search-icon-integrators' />
         </div>
       </div>
 
-      {loading ? (
-        <p>Ładowanie...</p>
-      ) : (
-        <div className='integrators-list'>
-          {filteredIntegrators.map((integrator) => (
-            <div key={integrator.PK} className='integrator-card'>
-              <Card
-                title={`Integrator: ${integrator.serialNumber}`}
-                icon='bi bi-tools'
-              >
-                <p>
-                  <strong>Lokalizacja:</strong> {integrator.location}
-                </p>
-                <p>
-                  <strong>Status:</strong> {integrator.status}
-                </p>
-                <button
-                  className='btn btn-danger'
-                  onClick={() => handleDeleteIntegrator(integrator.PK)}
-                  disabled={integrator.isDeleted}
-                >
-                  {integrator.isDeleted ? 'Usunięty' : 'Usuń'}
-                </button>
-              </Card>
+      {/* Formularz dodawania nowego integratora */}
+      {showAddIntegratorForm && (
+        <div className='add-integrator-form'>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAddIntegrator();
+            }}
+          >
+            <div className='form-group'>
+              <label htmlFor='location'>Lokalizacja</label>
+              <input
+                type='text'
+                id='location'
+                placeholder='Wprowadź lokalizację'
+                value={newIntegrator.location}
+                onChange={(e) =>
+                  setNewIntegrator({
+                    ...newIntegrator,
+                    location: e.target.value,
+                  })
+                }
+                required
+              />
             </div>
-          ))}
+            <div className='form-group'>
+              <label htmlFor='serialNumber'>Numer seryjny</label>
+              <input
+                type='text'
+                id='serialNumber'
+                placeholder='Wprowadź numer seryjny'
+                value={newIntegrator.serialNumber}
+                onChange={(e) =>
+                  setNewIntegrator({
+                    ...newIntegrator,
+                    serialNumber: e.target.value,
+                  })
+                }
+                required
+              />
+            </div>
+            <button type='submit' className='btn-submit'>
+              Dodaj Integrator
+            </button>
+          </form>
         </div>
       )}
 
-      <h2 className='mt-4'>Dodaj nowy Integrator</h2>
-      <form
-        className='row g-3'
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleAddIntegrator();
-        }}
-      >
-        <div className='col-md-6'>
-          <label htmlFor='location' className='form-label'>
-            Lokalizacja
-          </label>
-          <input
-            type='text'
-            className='form-control'
-            id='location'
-            placeholder='Wprowadź lokalizację'
-            value={newIntegrator.location}
-            onChange={(e) =>
-              setNewIntegrator({ ...newIntegrator, location: e.target.value })
-            }
-            required
-          />
+      {/* Lista integratorów */}
+      {loading ? (
+        <div className='loader-container'>
+          <GridLoader color='var(--primary-500)' />
         </div>
-        <div className='col-md-6'>
-          <label htmlFor='serialNumber' className='form-label'>
-            Numer seryjny
-          </label>
-          <input
-            type='text'
-            className='form-control'
-            id='serialNumber'
-            placeholder='Wprowadź numer seryjny'
-            value={newIntegrator.serialNumber}
-            onChange={(e) =>
-              setNewIntegrator({
-                ...newIntegrator,
-                serialNumber: e.target.value,
-              })
-            }
-            required
-          />
+      ) : (
+        <div className='integrators-list' ref={integratorsListRef}>
+          {filteredIntegrators.length > 0 ? (
+            filteredIntegrators.map((integrator) => (
+              <div
+                key={integrator.PK}
+                className={`integrator-card ${
+                  integrator.isDeleted ? 'integrator-deleted' : ''
+                }`}
+              >
+                <div className='integrator-header'>
+                  <h3>
+                    {integrator.serialNumber}
+                    {integrator.isDeleted && (
+                      <TiDeleteOutline className='deleted-icon' />
+                    )}
+                  </h3>
+                  <div className='integrator-icons'>
+                    <FaCog
+                      className='integrator-icon'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOptions(integrator.PK);
+                      }}
+                    />
+                    {expandedIntegrators.includes(integrator.PK) ? (
+                      <PiCaretCircleUpFill
+                        className='integrator-icon'
+                        onClick={() => toggleIntegratorDetails(integrator.PK)}
+                      />
+                    ) : (
+                      <PiCaretCircleDownFill
+                        className='integrator-icon'
+                        onClick={() => toggleIntegratorDetails(integrator.PK)}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Menu opcji */}
+                {showOptionsIntegratorId === integrator.PK && (
+                  <div
+                    className='options-menu-integrator'
+                    ref={optionsMenuRef}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ul>
+                      <li
+                        onClick={() =>
+                          handleOptionSelect(integrator.PK, 'changeStatus')
+                        }
+                      >
+                        Zmień status
+                      </li>
+                      <li onClick={() => handleDeleteIntegrator(integrator.PK)}>
+                        Usuń integrator
+                      </li>
+                    </ul>
+                  </div>
+                )}
+
+                {/* Szczegóły integratora */}
+                {expandedIntegrators.includes(integrator.PK) && (
+                  <div className='integrator-details'>
+                    <p>
+                      <strong>Lokalizacja:</strong> {integrator.location}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {integrator.status}
+                    </p>
+                    {/* Dodatkowe informacje można dodać tutaj */}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p>Brak integratorów do wyświetlenia.</p>
+          )}
         </div>
-        <div className='col-12 mt-3'>
-          <button type='submit' className='btn btn-primary'>
-            Dodaj Integrator
-          </button>
-        </div>
-      </form>
+      )}
+
       {successMessage && (
         <ToastContainer
           message={successMessage}

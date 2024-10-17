@@ -1,54 +1,239 @@
-/* Stylizacja kart integratorów */
-.integrators-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+/* src/components/ManageIntegrators/manageIntegrators.css */
+
+/* Główny kontener */
+.manage-integrators-container {
+  padding: 20px;
+  background-color: var(--primary-50);
 }
 
-.integrator-card {
-  flex: 1 1 calc(33.333% - 20px);
-  max-width: calc(33.333% - 20px);
+/* Sekcja wyboru managera */
+.manager-select {
   margin-bottom: 20px;
+  display: flex;
+  align-items: center;
 }
 
-@media (max-width: 768px) {
-  .integrator-card {
-    flex: 1 1 calc(50% - 20px);
-    max-width: calc(50% - 20px);
-  }
-}
-
-@media (max-width: 576px) {
-  .integrator-card {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
-}
-
-/* Stylizacja formularza */
-.form-label {
-  margin-top: 15px;
-  margin-bottom: 10px;
+.manager-select label {
+  margin-right: 10px;
   font-weight: bold;
 }
 
-.form-control {
-  border-radius: 0.35rem;
-}
-
-.btn-primary {
-  background-color: var(--PrimaryColor);
-  border-color: var(--PrimaryColor);
-}
-
-.btn-primary:hover {
-  background-color: var(--HoverColor);
-  border-color: var(--HoverColor);
-}
-
-.btn-danger {
-  margin-top: 10px;
-}
-.filters {
+/* Górny pasek z przyciskiem dodawania integratora, filtrem i wyszukiwaniem */
+.top-bar-integrators {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   margin-bottom: 20px;
+  gap: 20px;
+}
+
+.add-integrator-toggle {
+  flex: 1;
+}
+
+.add-integrator-toggle button {
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-integrator-toggle button:hover {
+  background-color: var(--primary-700);
+}
+
+.filters-integrators {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters-integrators select {
+  padding: 8px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+}
+
+/* Wyszukiwanie integratorów */
+.search-bar-integrators {
+  position: relative;
+  flex: 1;
+}
+
+.search-bar-integrators input {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+}
+
+.search-icon-integrators {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--textColor);
+}
+
+/* Formularz dodawania nowego integratora */
+.add-integrator-form {
+  margin-bottom: 20px;
+}
+
+.add-integrator-form form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.form-group {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--blackColor);
+}
+
+.form-group input {
+  padding: 10px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+  font-size: var(--normalFontSize);
+}
+
+.btn-submit {
+  padding: 12px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: var(--normalFontSize);
+  transition: background-color 0.3s ease;
+  margin-top: 25px;
+}
+
+.btn-submit:hover {
+  background-color: var(--primary-700);
+}
+
+/* Lista integratorów */
+.integrators-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.integrator-card {
+  background-color: var(--whiteColor);
+  padding: 20px;
+  border-radius: 12px;
+  flex: 1 1 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition: transform 0.3s ease-in-out;
+}
+
+.integrator-card:hover {
+  transform: translateY(-5px);
+}
+
+.integrator-deleted {
+  opacity: 0.6;
+}
+
+.integrator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.integrator-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--blackColor);
+}
+
+.integrator-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.integrator-icon {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: var(--blackColor);
+  transition: color 0.3s ease;
+}
+
+.integrator-icon:hover {
+  color: var(--primary-500);
+}
+
+.deleted-icon {
+  color: var(--complementary-500);
+  margin-left: 8px;
+  font-size: 1.2rem;
+}
+
+.integrator-details {
+  margin-top: 15px;
+}
+
+.options-menu-integrator {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background: var(--whiteColor);
+  border: 1px solid var(--border-neutral);
+  border-radius: 4px;
+  z-index: 1000;
+}
+
+.options-menu-integrator ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.options-menu-integrator li {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.options-menu-integrator li:hover {
+  background-color: var(--primary-100);
+}
+
+.loader-container {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .integrator-card {
+    flex: 1 1 100%;
+  }
+
+  .top-bar-integrators {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-integrator-toggle,
+  .filters-integrators,
+  .search-bar-integrators {
+    flex: 1 1 100%;
+  }
 }

@@ -1,212 +1,276 @@
-/* dashboard.css */
+/* src/components/Dashboard/dashboard.css */
 
-/* Ogólne stylizacje dla całej sekcji dashboardu */
-.dashboard .row {
+/* Ogólne stylizacje */
+.dashboard-section {
+  padding: 20px;
+  background-color: var(--primary-50);
+}
+
+/* Układ */
+.dashboard-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  margin: 0;
+  gap: 20px; /* Odstęp między kontenerami */
+  margin-bottom: 20px;
 }
 
-/* Karty */
-.card {
-  border: 1px solid #e3e6f0;
-  border-radius: 0.35rem;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-  background-color: #fff;
-  margin-bottom: 1.5rem;
+.dashboard-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Odstęp między kontenerami w kolumnie */
 }
 
-.card-header {
-  background-color: var(--PrimaryColor);
-  color: #fff;
+.full-width {
+  width: 100%;
+}
+
+.dashboard-container {
+  background-color: var(--whiteColor);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.dashboard-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.container-header {
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
   padding: 1rem;
-  border-bottom: 1px solid #e3e6f0;
+  display: flex;
+  align-items: center;
 }
 
-.card-title {
+.container-icon {
+  font-size: 1.8rem;
+  margin-right: 0.75rem;
+  transition: transform 0.3s ease-in-out;
+}
+
+.container-header:hover .container-icon {
+  transform: scale(1.2);
+}
+
+.container-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
-.card-body {
-  padding: 1.25rem;
+.container-content {
+  padding: 1.5rem;
+  background-color: var(--primary-50);
 }
 
-/* Stylizacja dla tabel wewnątrz kart */
-.table {
-  width: 100%;
-  margin-bottom: 1rem;
-  color: #6c757d;
-  text-align: left;
-  border-collapse: collapse;
+.loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100px;
 }
 
-.table th,
-.table td {
-  padding: 0.75rem;
-  vertical-align: top;
-  border-top: 1px solid #e3e6f0;
+/* Lista pracowników */
+.dashboard-worker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.table thead th {
-  background-color: #f8f9fc;
-  color: #5a5c69;
-  font-weight: bold;
+.dashboard-worker-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--analogous2-50);
+  transition: background-color 0.3s ease;
 }
 
-.table tbody tr:nth-of-type(even) {
-  background-color: #f9fafb;
+.dashboard-worker-item:hover {
+  background-color: var(--analogous2-200);
 }
 
-.table tbody tr.text-decoration-line-through {
+.worker-name {
+  font-size: 1rem;
+  color: var(--blackColor);
+}
+
+.worker-email {
+  font-size: 0.9rem;
+  color: var(--textColor);
+}
+
+/* Lista integratorów */
+.dashboard-integrator-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-integrator-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.integrator-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.integrator-serial {
+  font-size: 1rem;
+  color: var(--blackColor);
+}
+
+.integrator-location {
+  font-size: 0.9rem;
+  color: var(--textColor);
+}
+
+.integrator-actions {
+  display: flex;
+  align-items: center;
+}
+
+.status-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--blackColor);
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.status-button:hover {
+  color: var(--primary-500);
+}
+
+/* Kolory statusów */
+.status-yellow {
+  background-color: var(--analogous-200);
+}
+
+.status-red {
+  background-color: var(--complementary-200);
+}
+
+.status-green {
+  background-color: var(--primary-200);
+}
+
+/* Lista grup integratorów */
+.dashboard-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dashboard-group-item {
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--triadic2-50);
+  transition: background-color 0.3s ease;
+}
+
+.dashboard-group-item:hover {
+  background-color: var(--triadic2-200);
+}
+
+.group-deleted {
   text-decoration: line-through;
-  color: #d9534f; /* Czerwony kolor dla usuniętych grup */
+  color: var(--complementary-500);
 }
 
 /* Przyciski "Pokaż więcej/mniej" */
-.btn-link {
+.btn-show-more {
   display: block;
-  text-align: center;
-  color: #4e73df;
-  cursor: pointer;
-  background-color: transparent;
+  margin: 0 auto;
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
   border: none;
-  padding: 0.5rem;
-  margin-top: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: var(--normalFontSize);
+  transition: background-color 0.3s ease;
 }
 
-.btn-link:hover {
-  text-decoration: underline;
-  color: #224abe;
+.btn-show-more:hover {
+  background-color: var(--primary-700);
 }
 
-.btn-link:focus {
+.btn-show-more:focus {
   outline: none;
-  box-shadow: none;
 }
 
-/* Stylizacja selecta dla wyboru managera */
+/* Stylizacja selecta */
 .form-select {
   width: 100%;
   padding: 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.35rem;
+  font-size: var(--normalFontSize);
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
 }
 
-/* Stylizacja dla placeholdera "Ładowanie..." */
-.loading-text {
-  text-align: center;
-  font-size: 1rem;
-  color: #5a5c69;
-  margin: 1rem 0;
+/* Media queries */
+@media (max-width: 992px) {
+  .dashboard-row {
+    flex-direction: column;
+  }
+
+  .dashboard-column {
+    width: 100%;
+  }
 }
 
-/* Stylizacja dla kart na mniejszych ekranach */
-@media (max-width: 576px) {
-  .card-body {
-    padding: 0.75rem;
+@media (max-width: 768px) {
+  .container-content {
+    padding: 1.25rem;
   }
 
-  .card-header {
-    padding: 0.75rem;
-  }
-
-  .card-title {
+  .container-title {
     font-size: 1rem;
   }
 
-  .table th,
-  .table td {
-    font-size: 0.85rem;
-    padding: 0.5rem;
+  .container-icon {
+    font-size: 1.5rem;
   }
 
-  .btn-link {
-    font-size: 0.85rem;
-    padding: 0.5rem;
+  .worker-name,
+  .worker-email,
+  .integrator-serial,
+  .integrator-location {
+    font-size: 0.9rem;
   }
-}
-/* Stylizacja dla listy pracowników */
-/* Stylizacja dla listy pracowników */
-.worker-list {
-  padding: 0;
-}
-
-.worker-item {
-  padding: 10px;
-  border-radius: 5px;
-  background-color: var(--lightGreen);
-  margin-bottom: 10px; /* Dodano margines dolny */
-}
-.worker-item:hover {
-  background-color: var(--HoverColor);
-  transition: 0.3s all;
-  color: #fff;
-}
-.worker-item strong {
-  font-size: 1rem;
-}
-
-.worker-item .text-muted {
-  font-size: 0.9rem;
-  color: #bcc9d4;
-}
-
-/* Dodatkowy margines dla elementów "N/A" */
-.worker-item:nth-child(n + 1) {
-  margin-bottom: 10px; /* Upewnij się, że zawsze jest margines dolny */
 }
 
 @media (max-width: 576px) {
-  .worker-item strong {
+  .container-content {
+    padding: 1rem;
+  }
+
+  .container-title {
     font-size: 0.9rem;
   }
 
-  .worker-item .text-muted {
+  .container-icon {
+    font-size: 1.2rem;
+  }
+
+  .worker-name,
+  .worker-email,
+  .integrator-serial,
+  .integrator-location {
     font-size: 0.8rem;
-  }
-}
-.dashboard .row {
-  margin-bottom: 1rem;
-}
-
-/* Stylizacja tabel */
-.table th,
-.table td {
-  padding: 0.75rem;
-  border-top: 1px solid #e3e6f0;
-}
-
-/* Margines między kartami */
-.card {
-  margin-bottom: 1.5rem;
-}
-
-/* Stylizacja przycisku */
-.btn-link {
-  display: block;
-  text-align: center;
-  margin-top: 1rem;
-  color: #4e73df;
-}
-
-.btn-link:hover {
-  text-decoration: underline;
-}
-
-/* Media query dla mniejszych ekranów */
-@media (max-width: 576px) {
-  .card-body {
-    padding: 0.75rem;
-  }
-  .table th,
-  .table td {
-    font-size: 0.75rem;
-  }
-  .btn-link {
-    font-size: 0.75rem;
   }
 }

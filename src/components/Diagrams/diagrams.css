@@ -1,39 +1,63 @@
+/* src/components/Diagrams/diagrams.css */
+
 .diagrams-container {
   padding: 20px;
-  background-color: var(--background-neutral);
-  color: var(--blackColor);
-  max-width: 1200px;
-  margin: 0 auto;
+  background-color: var(--primary-50);
 }
 
 .diagrams-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   margin-bottom: 20px;
-  flex-direction: row;
-  justify-content: space-between;
+  gap: 20px;
 }
 
-.diagrams-header h2 {
-  flex-grow: 1;
+.diagrams-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.diagrams-title h2 {
+  margin: 0;
   color: var(--primary-900);
-  letter-spacing: 0.05em;
   font-weight: 600;
 }
 
-.diagrams-add-icon {
+.diagrams-title button {
+  margin-left: 20px;
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 1.2em;
-  color: var(--primary-700);
-  border-radius: 50%;
-  padding: 10px;
-  background-color: var(--primary-50);
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.diagrams-add-icon:hover {
-  transform: scale(1.05);
-  background-color: var(--primary-300);
+.diagrams-title button:hover {
+  background-color: var(--primary-700);
+}
+
+/* Wyszukiwanie raportów */
+.diagrams-search-bar {
+  position: relative;
+  flex: 1;
+}
+
+.diagrams-search-bar input {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+}
+
+.diagrams-search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--textColor);
 }
 
 .diagrams-create-report {
@@ -48,7 +72,6 @@
 .diagrams-create-report h3 {
   margin-bottom: 15px;
   color: var(--primary-800);
-  letter-spacing: 0.05em;
 }
 
 .diagrams-form-group {
@@ -59,7 +82,7 @@
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
-  color: var(--primary-900);
+  color: var(--blackColor);
 }
 
 .diagrams-form-group input[type='text'],
@@ -67,14 +90,7 @@
   width: 100%;
   padding: 10px;
   border: 1px solid var(--border-neutral);
-  border-radius: 8px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.diagrams-form-group input[type='text']:focus,
-.diagrams-form-group select:focus {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 4px var(--primary-300);
+  border-radius: 5px;
 }
 
 .diagrams-data-entry {
@@ -83,42 +99,71 @@
   margin-bottom: 15px;
   border-radius: 12px;
   background-color: var(--primary-50);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .diagrams-data-entry .diagrams-form-group {
   margin-bottom: 10px;
 }
 
-.diagrams-data-entry button {
-  background: linear-gradient(45deg, var(--primary-500), var(--primary-700));
+.diagrams-checkbox {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.diagrams-checkbox input {
+  margin-right: 5px;
+}
+
+.diagrams-remove-entry {
+  background-color: var(--complementary-500);
   color: var(--whiteColor);
   padding: 8px 12px;
   border: none;
-  border-radius: 50px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  margin-top: 10px;
 }
 
-.diagrams-data-entry button:hover {
-  background: linear-gradient(45deg, var(--primary-700), var(--primary-900));
-  transform: scale(1.05);
+.diagrams-remove-entry:hover {
+  background-color: var(--complementary-700);
 }
 
-.diagrams-existing-reports button {
-  background: linear-gradient(45deg, var(--primary-500), var(--primary-700));
+.diagrams-add-entry {
+  background-color: var(--primary-500);
   color: var(--whiteColor);
-  padding: 8px 12px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 50px;
+  border-radius: 5px;
   cursor: pointer;
-  margin: 10px 0;
-  transition: background 0.3s ease;
+  margin-right: 10px;
 }
 
-.diagrams-existing-reports button:hover {
-  background: linear-gradient(45deg, var(--primary-700), var(--primary-900));
-  transform: scale(1.05);
+.diagrams-add-entry:hover {
+  background-color: var(--primary-700);
+}
+
+.diagrams-create-button {
+  background-color: var(--primary-700);
+  color: var(--whiteColor);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.diagrams-create-button:hover {
+  background-color: var(--primary-900);
+}
+
+.diagrams-existing-reports {
+  margin-bottom: 30px;
+}
+
+.diagrams-existing-reports h3 {
+  color: var(--primary-800);
 }
 
 .diagrams-existing-reports ul {
@@ -135,13 +180,29 @@
   text-align: left;
   background-color: var(--whiteColor);
   color: var(--primary-900);
-  border: 1px solid var(--primary-200);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-neutral);
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .diagrams-existing-reports li button:hover {
-  background-color: var(--primary-50);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  background-color: var(--primary-100);
+}
+
+.diagrams-existing-reports button {
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.diagrams-existing-reports button:hover {
+  background-color: var(--primary-700);
 }
 
 .diagrams-report-details {
@@ -165,7 +226,6 @@
   height: 100px;
 }
 
-/* Styles for the table icon */
 .diagrams-report-header {
   display: flex;
   align-items: center;
@@ -190,7 +250,6 @@
   color: var(--primary-900);
 }
 
-/* Styles for the efficiency table */
 .diagrams-efficiency-table {
   margin-bottom: 30px;
 }
@@ -229,51 +288,37 @@
   background-color: var(--primary-50);
 }
 
-/* Modern buttons for create report and report details */
-.diagrams-create-report button,
-.diagrams-report-details button {
-  background: linear-gradient(45deg, var(--primary-500), var(--primary-700));
+.diagrams-generate-pdf {
+  background-color: var(--primary-700);
   color: var(--whiteColor);
   padding: 12px 24px;
   border: none;
-  border-radius: 50px;
+  border-radius: 5px;
   cursor: pointer;
-  margin-right: 10px;
   margin-top: 10px;
-  transition: background 0.3s ease, transform 0.2s ease;
 }
 
-.diagrams-create-report button:hover,
-.diagrams-report-details button:hover {
-  background: linear-gradient(45deg, var(--primary-700), var(--primary-900));
-  transform: scale(1.05);
+.diagrams-generate-pdf:hover {
+  background-color: var(--primary-900);
 }
 
-.diagrams-create-report button:disabled {
-  background-color: var(--primary-200);
-  cursor: not-allowed;
-}
-
-/* Responsive styles */
+/* Responsywność */
 @media (max-width: 768px) {
   .diagrams-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .diagrams-add-icon {
-    margin-top: 10px;
+  .diagrams-title {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .diagrams-create-report,
-  .diagrams-data-entry {
-    padding: 10px;
+  .diagrams-title h2 {
+    margin-bottom: 10px;
   }
-}
 
-@media (min-width: 1024px) {
-  .diagrams-container {
-    max-width: 1200px;
-    margin: 0 auto;
+  .diagrams-search-bar {
+    flex: 1 1 100%;
   }
 }

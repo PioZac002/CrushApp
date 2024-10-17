@@ -6,7 +6,7 @@ import axios from 'axios';
 import { endpoints } from '../../api/api';
 import './manageGroups.css';
 import ToastContainer from '../ToastContainer/ToastContainer';
-import { FaCog } from 'react-icons/fa';
+import { FaCog, FaSearch } from 'react-icons/fa';
 import { PiCaretCircleDownFill, PiCaretCircleUpFill } from 'react-icons/pi';
 import { TiDeleteOutline } from 'react-icons/ti';
 import { GridLoader } from 'react-spinners';
@@ -22,6 +22,7 @@ const ManageGroups = () => {
   const [groupUsers, setGroupUsers] = useState({});
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState(''); // Nowa zmienna stanu dla wyszukiwania
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showOptionsGroupId, setShowOptionsGroupId] = useState(null);
@@ -31,7 +32,9 @@ const ManageGroups = () => {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedIntegratorID, setSelectedIntegratorID] = useState('');
   const [selectedUserID, setSelectedUserID] = useState('');
+  const [showAddGroup, setShowAddGroup] = useState(false);
   const optionsMenuRef = useRef(null);
+  const groupListRef = useRef(null); // Referencja do listy grup
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -135,6 +138,7 @@ const ManageGroups = () => {
       if (response && response.data) {
         setGroups([...groups, response.data]);
         setGroupName('');
+        setShowAddGroup(false); // Ukryj formularz po dodaniu grupy
         showSuccessMessage('Grupa została dodana pomyślnie.');
       }
     } catch (error) {
@@ -242,19 +246,11 @@ const ManageGroups = () => {
   // Zamykanie rozwiniętych grup po kliknięciu w dowolne miejsce
   useEffect(() => {
     const handleClickOutsideGroups = (event) => {
-      if (expandedGroups.length > 0) {
-        const groupElements = document.querySelectorAll('.group-card');
-        let clickedInsideGroup = false;
-
-        groupElements.forEach((groupElement) => {
-          if (groupElement.contains(event.target)) {
-            clickedInsideGroup = true;
-          }
-        });
-
-        if (!clickedInsideGroup) {
-          setExpandedGroups([]);
-        }
+      if (
+        groupListRef.current &&
+        !groupListRef.current.contains(event.target)
+      ) {
+        setExpandedGroups([]);
       }
     };
 
@@ -263,7 +259,7 @@ const ManageGroups = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutsideGroups);
     };
-  }, [expandedGroups]);
+  }, []);
 
   // Funkcja obsługująca wyświetlanie opcji (koło zębatego)
   const toggleOptions = (groupID) => {
@@ -486,14 +482,18 @@ const ManageGroups = () => {
   }, [showModal, modalData, user, isService, selectedManagerID]);
 
   // Filtrowanie grup
-  const filteredGroups = groups.filter((group) => {
-    if (filter === 'active') return !group.isDeleted;
-    if (filter === 'deleted') return group.isDeleted;
-    return true;
-  });
+  const filteredGroups = groups
+    .filter((group) => {
+      if (filter === 'active') return !group.isDeleted;
+      if (filter === 'deleted') return group.isDeleted;
+      return true;
+    })
+    .filter((group) =>
+      group.integratorGroupName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   return (
-    <div className='manage-groups'>
+    <div className='manage-groups-container'>
       {/* Dla Serwisanta: Wybór managera */}
       {isService && (
         <div className='manager-select'>
@@ -521,42 +521,67 @@ const ManageGroups = () => {
         </div>
       )}
 
-      {/* Filtr grup */}
-      <div className='filter-section'>
-        <label htmlFor='statusFilter'>Filtruj grupy:</label>
-        <select
-          id='statusFilter'
-          className='form-select'
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value='all'>Wszystkie</option>
-          <option value='active'>Aktywne</option>
-          <option value='deleted'>Usunięte</option>
-        </select>
+      {/* Przycisk do pokazania/ukrycia formularza dodawania grupy */}
+      <div className='top-bar'>
+        <div className='add-group-toggle'>
+          <button onClick={() => setShowAddGroup(!showAddGroup)}>
+            {showAddGroup ? 'Anuluj' : 'Dodaj nową grupę'}
+          </button>
+        </div>
+
+        {/* Filtr grup */}
+        <div className='filter-section'>
+          <label htmlFor='statusFilter'>Filtruj grupy:</label>
+          <select
+            id='statusFilter'
+            className='form-select'
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value='all'>Wszystkie</option>
+            <option value='active'>Aktywne</option>
+            <option value='deleted'>Usunięte</option>
+          </select>
+        </div>
+
+        {/* Wyszukiwanie grup */}
+        <div className='search-bar'>
+          <input
+            type='text'
+            placeholder='Szukaj grupy...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className='search-icon' />
+        </div>
       </div>
 
-      {/* Input do tworzenia nowej grupy */}
-      <div className='add-group'>
-        <input
-          type='text'
-          placeholder='Nazwa grupy'
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-        />
-        <button
-          onClick={handleAddGroup}
-          disabled={!groupName || (isService && !selectedManagerID)}
-        >
-          Dodaj grupę
-        </button>
-      </div>
+      {/* Formularz dodawania nowej grupy */}
+      {showAddGroup && (
+        <div className='add-group-form'>
+          <input
+            type='text'
+            placeholder='Nazwa grupy'
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+          />
+          <button
+            onClick={handleAddGroup}
+            disabled={!groupName || (isService && !selectedManagerID)}
+          >
+            Dodaj grupę
+          </button>
+        </div>
+      )}
 
       {/* Lista grup */}
-      <div className='group-list'>
+      <div className='group-list' ref={groupListRef}>
         {filteredGroups.length > 0 ? (
           filteredGroups.map((group) => (
-            <div className='group-card' key={group.PK}>
+            <div
+              className={`group-card ${group.isDeleted ? 'group-deleted' : ''}`}
+              key={group.PK}
+            >
               <div className='group-header'>
                 <h3>
                   {group.integratorGroupName}
@@ -567,7 +592,10 @@ const ManageGroups = () => {
                 <div className='group-icons'>
                   <FaCog
                     className='group-icon'
-                    onClick={() => toggleOptions(group.PK)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleOptions(group.PK);
+                    }}
                   />
                   {expandedGroups.includes(group.PK) ? (
                     <PiCaretCircleUpFill
@@ -585,7 +613,11 @@ const ManageGroups = () => {
 
               {/* Menu opcji */}
               {showOptionsGroupId === group.PK && (
-                <div className='options-menu' ref={optionsMenuRef}>
+                <div
+                  className='options-menu'
+                  ref={optionsMenuRef}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <ul>
                     <li
                       onClick={() =>
@@ -656,7 +688,7 @@ const ManageGroups = () => {
           ))
         ) : loading ? (
           <div className='loader-container'>
-            <GridLoader color='#1cb726' />
+            <GridLoader color='var(--primary-500)' />
           </div>
         ) : (
           <p>Brak grup do wyświetlenia.</p>

@@ -23,7 +23,7 @@ import html2canvas from 'html2canvas';
 import { GridLoader } from 'react-spinners';
 
 // Import for icons
-import { FaTable, FaPlus } from 'react-icons/fa';
+import { FaTable, FaPlus, FaSearch } from 'react-icons/fa';
 
 const Diagrams = () => {
   const { user } = useContext(AuthContext);
@@ -50,8 +50,10 @@ const Diagrams = () => {
 
   const [integratorMap, setIntegratorMap] = useState({});
   const [showTable, setShowTable] = useState(false);
-  const [showCreateReport, setShowCreateReport] = useState(false); // Toggle for creating report
-  const [showAllReports, setShowAllReports] = useState(false); // Toggle for showing all reports
+  const [showCreateReport, setShowCreateReport] = useState(false);
+  const [showAllReports, setShowAllReports] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState(''); // Nowa zmienna stanu dla wyszukiwania
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -311,14 +313,35 @@ const Diagrams = () => {
     setShowAllReports(!showAllReports);
   };
 
+  // Filtracja raportów na podstawie nazwy
+  const filteredReports = reports.filter((report) =>
+    report.reportName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className='diagrams-container'>
+      {/* Górny pasek z tytułem, przyciskiem dodawania raportu i polem wyszukiwania */}
       <div className='diagrams-header'>
-        <h2>Wykresy i raporty</h2>
-        <FaPlus className='diagrams-add-icon' onClick={toggleCreateReport} />
+        <div className='diagrams-title'>
+          <h2>Wykresy i raporty</h2>
+          <button onClick={toggleCreateReport}>
+            {showCreateReport ? 'Anuluj' : 'Stwórz nowy raport'}
+          </button>
+        </div>
+
+        {/* Pole wyszukiwania raportów */}
+        <div className='diagrams-search-bar'>
+          <input
+            type='text'
+            placeholder='Szukaj raportu...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className='diagrams-search-icon' />
+        </div>
       </div>
 
-      {/* Form to create a new report */}
+      {/* Formularz tworzenia nowego raportu */}
       {showCreateReport && (
         <div className='diagrams-create-report'>
           <h3>Stwórz nowy raport</h3>
@@ -381,7 +404,7 @@ const Diagrams = () => {
                     ))}
                   </optgroup>
                 </select>
-                <label>
+                <label className='diagrams-checkbox'>
                   <input
                     type='checkbox'
                     checked={entry.isGroup}
@@ -419,11 +442,19 @@ const Diagrams = () => {
                   dateFormat='yyyy-MM-dd'
                 />
               </div>
-              <button onClick={() => removeDataEntry(index)}>Usuń</button>
+              <button
+                className='diagrams-remove-entry'
+                onClick={() => removeDataEntry(index)}
+              >
+                Usuń
+              </button>
             </div>
           ))}
-          <button onClick={addDataEntry}>Dodaj Kolejny</button>
+          <button className='diagrams-add-entry' onClick={addDataEntry}>
+            Dodaj Kolejny
+          </button>
           <button
+            className='diagrams-create-button'
             onClick={handleCreateReport}
             disabled={!reportName || (isService && !selectedManagerID)}
           >
@@ -432,14 +463,14 @@ const Diagrams = () => {
         </div>
       )}
 
-      {/* List of existing reports */}
+      {/* Lista istniejących raportów */}
       <div className='diagrams-existing-reports'>
         <h3>Istniejące Raporty</h3>
-        {reports.length > 0 ? (
+        {filteredReports.length > 0 ? (
           <>
             <ul>
-              {reports
-                .slice(0, showAllReports ? reports.length : 5)
+              {filteredReports
+                .slice(0, showAllReports ? filteredReports.length : 5)
                 .map(({ reportID, reportName }) => (
                   <li key={reportID}>
                     <button onClick={() => handleSelectReport(reportID)}>
@@ -448,7 +479,7 @@ const Diagrams = () => {
                   </li>
                 ))}
             </ul>
-            {reports.length > 5 && (
+            {filteredReports.length > 5 && (
               <button onClick={toggleShowAllReports}>
                 {showAllReports ? 'Pokaż mniej' : 'Pokaż więcej'}
               </button>
@@ -459,7 +490,7 @@ const Diagrams = () => {
         )}
       </div>
 
-      {/* Displaying selected report data */}
+      {/* Wyświetlanie danych wybranego raportu */}
       {selectedReportID && (
         <div className='diagrams-report-details'>
           <div className='diagrams-report-header'>
@@ -475,7 +506,7 @@ const Diagrams = () => {
             </div>
           ) : (
             <div id='report-content'>
-              {/* Displaying efficiency tables */}
+              {/* Wyświetlanie tabel efektywności */}
               {showTable && (
                 <div className='diagrams-efficiency-table'>
                   {reportData.map((dataEntry, index) => (
@@ -506,7 +537,7 @@ const Diagrams = () => {
                 </div>
               )}
 
-              {/* Displaying charts */}
+              {/* Wyświetlanie wykresów */}
               {reportData.map((dataEntry, index) => (
                 <div key={index} className='diagrams-chart-container'>
                   <h4>
@@ -549,7 +580,9 @@ const Diagrams = () => {
               ))}
             </div>
           )}
-          <button onClick={generatePDF}>Generuj PDF</button>
+          <button className='diagrams-generate-pdf' onClick={generatePDF}>
+            Generuj PDF
+          </button>
         </div>
       )}
     </div>

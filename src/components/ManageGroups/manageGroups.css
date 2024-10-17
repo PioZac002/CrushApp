@@ -1,41 +1,149 @@
-/* Stylizacja głównego kontenera */
-.manage-groups {
+/* src/components/ManageGroups/manageGroups.css */
+
+/* Główny kontener */
+.manage-groups-container {
   padding: 20px;
+  background-color: var(--primary-50);
 }
 
-/* Stylizacja sekcji wyboru managera */
-.manager-select,
-.add-group,
+/* Sekcja wyboru managera */
+.manager-select {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.manager-select label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Górny pasek z przyciskiem dodawania grupy, filtrem i wyszukiwaniem */
+.top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.add-group-toggle {
+  flex: 1;
+}
+
+.add-group-toggle button {
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-group-toggle button:hover {
+  background-color: var(--primary-700);
+}
+
+/* Filtr grup */
 .filter-section {
+  display: flex;
+  align-items: center;
+}
+
+.filter-section label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Wyszukiwanie grup */
+.search-bar {
+  position: relative;
+  flex: 1;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+}
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--textColor);
+}
+
+/* Formularz dodawania nowej grupy */
+.add-group-form {
+  display: flex;
+  align-items: center;
   margin-bottom: 20px;
 }
 
-.manager-select label,
-.filter-section label {
+.add-group-form input {
+  padding: 10px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
   margin-right: 10px;
+  flex: 1;
 }
 
-/* Stylizacja listy grup */
+.add-group-form button {
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.add-group-form button:disabled {
+  background-color: var(--border-neutral);
+  cursor: not-allowed;
+}
+
+.add-group-form button:hover:not(:disabled) {
+  background-color: var(--primary-700);
+}
+
+/* Lista grup */
 .group-list {
   display: flex;
   flex-wrap: wrap;
+  gap: 20px;
 }
 
 .group-card {
-  background: #f5f5f5;
+  background-color: var(--whiteColor);
   padding: 20px;
-  border: 1px solid #ddd;
-  margin-right: 20px;
-  margin-bottom: 20px;
-  width: 300px;
-  border-radius: 8px;
+  border-radius: 12px;
+  flex: 1 1 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   position: relative;
+  transition: transform 0.3s ease-in-out;
+}
+
+.group-card:hover {
+  transform: translateY(-5px);
+}
+
+.group-deleted {
+  opacity: 0.6;
 }
 
 .group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.group-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--blackColor);
 }
 
 .group-icons {
@@ -45,13 +153,19 @@
 
 .group-icon {
   cursor: pointer;
-  font-size: 1.5em;
+  font-size: 1.5rem;
+  color: var(--blackColor);
+  transition: color 0.3s ease;
+}
+
+.group-icon:hover {
+  color: var(--primary-500);
 }
 
 .deleted-icon {
-  color: red;
+  color: var(--complementary-500);
   margin-left: 8px;
-  font-size: 1.2em;
+  font-size: 1.2rem;
 }
 
 .group-details {
@@ -63,55 +177,56 @@
   margin-top: 15px;
 }
 
+.users-section h4,
+.integrators-section h4 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: var(--primary-700);
+}
+
+.users-section ul,
+.integrators-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.users-section li,
+.integrators-section li {
+  padding: 8px;
+  background-color: var(--primary-100);
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
 .deleted-item {
   text-decoration: line-through;
-  color: gray;
+  color: var(--textColor);
 }
 
 .options-menu {
   position: absolute;
   top: 40px;
   right: 10px;
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--whiteColor);
+  border: 1px solid var(--border-neutral);
   border-radius: 4px;
-  z-index: 10;
+  z-index: 1000; /* Zwiększony z-index */
 }
 
 .options-menu ul {
   list-style: none;
   margin: 0;
-  padding: 5px 0;
+  padding: 0;
 }
 
 .options-menu li {
-  padding: 8px 15px;
+  padding: 10px 15px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .options-menu li:hover {
-  background-color: #f0f0f0;
-}
-
-.add-group input {
-  padding: 8px;
-  margin-right: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.add-group button {
-  padding: 8px 12px;
-  background-color: #0edf4d;
-  color: white;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.add-group button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
+  background-color: var(--primary-100);
 }
 
 /* Stylizacja modala */
@@ -129,15 +244,19 @@
 }
 
 .modal-content {
-  background: white;
+  background: var(--whiteColor);
   padding: 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 500px;
   max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .modal-content h3 {
   margin-top: 0;
+  font-size: 1.5rem;
+  color: var(--primary-700);
 }
 
 .modal-field {
@@ -153,37 +272,61 @@
 .modal-field select,
 .modal-field input {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
 }
 
 .modal-content button {
   margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #11d66a;
-  color: white;
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
   border: none;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 5px;
+}
+
+.modal-content button:hover {
+  background-color: var(--primary-700);
 }
 
 .modal-close {
-  background-color: #dc3545;
+  background-color: var(--complementary-500);
   margin-left: 10px;
 }
 
+.modal-close:hover {
+  background-color: var(--complementary-700);
+}
+
 .modal-content button:disabled {
-  background-color: #6c757d;
+  background-color: var(--border-neutral);
   cursor: not-allowed;
 }
 
-/* Stylizacja kontenera loadera */
 .loader-container {
   margin-top: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
-  scale: 250%;
   width: 100%;
+}
+
+/* Media queries */
+@media (max-width: 768px) {
+  .group-card {
+    flex: 1 1 100%;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-group-toggle,
+  .filter-section,
+  .search-bar {
+    flex: 1 1 100%;
+  }
 }

@@ -1,9 +1,11 @@
+// src/components/Dashboard/Dashboard.jsx
+
 import React, { useContext, useEffect, useState } from 'react';
-import Card from './Card';
 import './dashboard.css';
 import { AuthContext } from '../../../context/AuthContext';
 import axios from 'axios';
 import { endpoints } from '../../../api/api';
+import { GridLoader } from 'react-spinners';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -116,16 +118,29 @@ const Dashboard = () => {
     setSelectedManagerID(e.target.value);
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 0:
+        return 'status-yellow';
+      case 1:
+        return 'status-red';
+      case 2:
+        return 'status-green';
+      default:
+        return '';
+    }
+  };
+
   const renderWorkersList = () => (
-    <div className='worker-list'>
+    <div className='dashboard-worker-list'>
       {(showMoreWorkers ? workers : workers.slice(0, 5)).map((worker) => {
         if (
           !worker.cognitoAttributes ||
           !Array.isArray(worker.cognitoAttributes)
         ) {
           return (
-            <div key={worker.PK} className='row worker-item'>
-              <div className='col-12'>N/A</div>
+            <div key={worker.PK} className='dashboard-worker-item'>
+              <div>N/A</div>
             </div>
           );
         }
@@ -145,81 +160,74 @@ const Dashboard = () => {
         const email = emailAttr ? emailAttr.Value : 'N/A';
 
         return (
-          <div
-            key={worker.PK}
-            className='row worker-item align-items-center mb-3'
-          >
-            <div className='col-8'>
+          <div key={worker.PK} className='dashboard-worker-item'>
+            <div className='worker-name'>
               <strong>
                 {givenName} {familyName}
               </strong>
             </div>
-            <div className='col-4 text-end text-muted'>{email}</div>
+            <div className='worker-email'>{email}</div>
           </div>
         );
       })}
-      {workers.length > 5 && (
-        <button
-          className='btn btn-link'
-          onClick={() => setShowMoreWorkers(!showMoreWorkers)}
-        >
-          {showMoreWorkers ? 'Pokaż mniej' : 'Pokaż więcej'}
-        </button>
-      )}
     </div>
   );
 
   const renderIntegratorList = () => (
-    <table className='table'>
-      <thead>
-        <tr>
-          <th>Serial Number</th>
-          <th>Location</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {(showMoreIntegrators ? integrators : integrators.slice(0, 5)).map(
-          (integrator) => (
-            <tr key={integrator.PK}>
-              <td>{integrator.serialNumber}</td>
-              <td>{integrator.location}</td>
-              <td>{integrator.status}</td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
+    <div className='dashboard-integrator-list'>
+      {(showMoreIntegrators ? integrators : integrators.slice(0, 5)).map(
+        (integrator) => (
+          <div
+            key={integrator.PK}
+            className={`dashboard-integrator-item ${getStatusColor(
+              integrator.status
+            )}`}
+          >
+            <div className='integrator-info'>
+              <div className='integrator-serial'>
+                <strong>{integrator.serialNumber}</strong>
+              </div>
+              <div className='integrator-location'>{integrator.location}</div>
+            </div>
+            <div className='integrator-actions'>
+              {/* Ikonka do zmiany statusu */}
+              <button className='status-button'>
+                <i className='bi bi-arrow-repeat'></i>
+              </button>
+            </div>
+          </div>
+        )
+      )}
+    </div>
   );
 
   const renderIntegratorGroups = () => (
-    <table className='table'>
-      <thead>
-        <tr>
-          <th>Nazwa grupy</th>
-        </tr>
-      </thead>
-      <tbody>
-        {(showMoreGroups ? integratorGroups : integratorGroups.slice(0, 5)).map(
-          (group) => (
-            <tr
-              key={group.PK}
-              className={group.isDeleted ? 'text-decoration-line-through' : ''}
-            >
-              <td>{group.integratorGroupName}</td>
-            </tr>
-          )
-        )}
-      </tbody>
-    </table>
+    <div className='dashboard-group-list'>
+      {(showMoreGroups ? integratorGroups : integratorGroups.slice(0, 5)).map(
+        (group) => (
+          <div
+            key={group.PK}
+            className={`dashboard-group-item ${
+              group.isDeleted ? 'group-deleted' : ''
+            }`}
+          >
+            {group.integratorGroupName}
+          </div>
+        )
+      )}
+    </div>
   );
 
   return (
-    <section className='dashboard section'>
-      <div className='row mb-4'>
-        {isService && (
-          <div className='col-lg-12'>
-            <Card title='Wybierz Managera' icon='bi bi-person'>
+    <section className='dashboard-section'>
+      {isService && (
+        <div className='dashboard-row'>
+          <div className='dashboard-container full-width'>
+            <div className='container-header'>
+              <i className='bi bi-person container-icon'></i>
+              <h5 className='container-title'>Wybierz Managera</h5>
+            </div>
+            <div className='container-content'>
               <select
                 className='form-select'
                 value={selectedManagerID}
@@ -242,55 +250,104 @@ const Dashboard = () => {
                   );
                 })}
               </select>
-            </Card>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className='row'>
-        <div className='col-lg-8'>
-          <Card title='Lista Integratorów' icon='bi bi-tools'>
-            {loading ? <p>Ładowanie...</p> : renderIntegratorList()}
-            {integrators.length > 5 && (
-              <button
-                className='btn btn-link'
-                onClick={() => setShowMoreIntegrators(!showMoreIntegrators)}
-              >
-                {showMoreIntegrators ? 'Pokaż mniej' : 'Pokaż więcej'}
-              </button>
-            )}
-          </Card>
+      <div className='dashboard-row'>
+        <div className='dashboard-column'>
+          <div className='dashboard-container'>
+            <div className='container-header'>
+              <i className='bi bi-tools container-icon'></i>
+              <h5 className='container-title'>Lista Integratorów</h5>
+            </div>
+            <div className='container-content'>
+              {loading ? (
+                <div className='loader-container'>
+                  <GridLoader color='var(--primary-500)' />
+                </div>
+              ) : (
+                <>
+                  {renderIntegratorList()}
+                  {integrators.length > 5 && (
+                    <button
+                      className='btn-show-more'
+                      onClick={() =>
+                        setShowMoreIntegrators(!showMoreIntegrators)
+                      }
+                    >
+                      {showMoreIntegrators ? 'Pokaż mniej' : 'Pokaż więcej'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
 
-          {/* Dodanie karty Wykresy poniżej listy Integratorów */}
-          <Card title='Wykresy' icon='bi bi-bar-chart'>
-            <p>Tutaj będzie miejsce na wykresy efektywności.</p>
-          </Card>
+          <div className='dashboard-container'>
+            <div className='container-header'>
+              <i className='bi bi-diagram-2 container-icon'></i>
+              <h5 className='container-title'>Lista Grup Integratorów</h5>
+            </div>
+            <div className='container-content'>
+              {loading ? (
+                <div className='loader-container'>
+                  <GridLoader color='var(--primary-500)' />
+                </div>
+              ) : (
+                <>
+                  {renderIntegratorGroups()}
+                  {integratorGroups.length > 5 && (
+                    <button
+                      className='btn-show-more'
+                      onClick={() => setShowMoreGroups(!showMoreGroups)}
+                    >
+                      {showMoreGroups ? 'Pokaż mniej' : 'Pokaż więcej'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className='col-lg-4'>
-          <Card title='Lista Pracowników' icon='bi bi-people'>
-            {loading ? <p>Ładowanie...</p> : renderWorkersList()}
-            {workers.length > 5 && (
-              <button
-                className='btn btn-link'
-                onClick={() => setShowMoreWorkers(!showMoreWorkers)}
-              >
-                {showMoreWorkers ? 'Pokaż mniej' : 'Pokaż więcej'}
-              </button>
-            )}
-          </Card>
+        <div className='dashboard-column'>
+          <div className='dashboard-container'>
+            <div className='container-header'>
+              <i className='bi bi-people container-icon'></i>
+              <h5 className='container-title'>Lista Pracowników</h5>
+            </div>
+            <div className='container-content'>
+              {loading ? (
+                <div className='loader-container'>
+                  <GridLoader color='var(--primary-500)' />
+                </div>
+              ) : (
+                <>
+                  {renderWorkersList()}
+                  {workers.length > 5 && (
+                    <button
+                      className='btn-show-more'
+                      onClick={() => setShowMoreWorkers(!showMoreWorkers)}
+                    >
+                      {showMoreWorkers ? 'Pokaż mniej' : 'Pokaż więcej'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
 
-          <Card title='Lista Grup Integratorów' icon='bi bi-diagram-2'>
-            {loading ? <p>Ładowanie...</p> : renderIntegratorGroups()}
-            {integratorGroups.length > 5 && (
-              <button
-                className='btn btn-link'
-                onClick={() => setShowMoreGroups(!showMoreGroups)}
-              >
-                {showMoreGroups ? 'Pokaż mniej' : 'Pokaż więcej'}
-              </button>
-            )}
-          </Card>
+          <div className='dashboard-container'>
+            <div className='container-header'>
+              <i className='bi bi-bar-chart container-icon'></i>
+              <h5 className='container-title'>Wykresy</h5>
+            </div>
+            <div className='container-content'>
+              <p>Tutaj będzie miejsce na wykresy efektywności.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
