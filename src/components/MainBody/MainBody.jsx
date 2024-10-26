@@ -1,4 +1,5 @@
-// MainBody.jsx
+// src/components/MainBody/MainBody.jsx
+
 import { Routes, Route } from 'react-router-dom';
 import PrivateRoute from '../PrivateRoute/PrivateRoute';
 import Dashboard from './Dashboard/Dashboard';
@@ -20,6 +21,7 @@ const MainBody = () => {
             </PrivateRoute>
           }
         />
+        {/* Remove other routes for workers */}
         <Route
           path='/pracownicy'
           element={

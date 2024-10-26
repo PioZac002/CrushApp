@@ -23,13 +23,16 @@ const ManageIntegrators = () => {
     location: '',
     serialNumber: '',
   });
-  const [filterLocation, setFilterLocation] = useState(''); // Lokalizacja
-  const [filterStatus, setFilterStatus] = useState(''); // Status
-  const [filterAvailability, setFilterAvailability] = useState('all'); // Dostępność
+  const [filterLocation, setFilterLocation] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterAvailability, setFilterAvailability] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddIntegratorForm, setShowAddIntegratorForm] = useState(false);
   const [expandedIntegrators, setExpandedIntegrators] = useState([]);
   const [showOptionsIntegratorId, setShowOptionsIntegratorId] = useState(null);
+  const [statusDropdownIntegratorId, setStatusDropdownIntegratorId] =
+    useState(null);
+
   const optionsMenuRef = useRef(null);
   const integratorsListRef = useRef(null);
 
@@ -50,7 +53,7 @@ const ManageIntegrators = () => {
     }, 5000);
   };
 
-  // Pobieranie managerów (jeśli użytkownik to Serwisant)
+  // Fetch managers (if user is Service)
   useEffect(() => {
     if (isService) {
       const fetchManagers = async () => {
@@ -68,7 +71,7 @@ const ManageIntegrators = () => {
             setManagers(managerList);
           }
         } catch (error) {
-          console.error('Błąd podczas pobierania managerów:', error);
+          console.error('Error fetching managers:', error);
         } finally {
           setLoading(false);
         }
@@ -77,7 +80,7 @@ const ManageIntegrators = () => {
     }
   }, [user, isService]);
 
-  // Pobieranie integratorów
+  // Fetch integrators
   useEffect(() => {
     const fetchIntegrators = async () => {
       setLoading(true);
@@ -95,7 +98,7 @@ const ManageIntegrators = () => {
           setIntegrators(response.data.integrators);
         }
       } catch (error) {
-        console.error('Błąd podczas pobierania integratorów:', error);
+        console.error('Error fetching integrators:', error);
       } finally {
         setLoading(false);
       }
@@ -106,7 +109,7 @@ const ManageIntegrators = () => {
     }
   }, [user, selectedManagerID, isManager, isService]);
 
-  // Filtrowanie integratorów
+  // Filtering integrators
   const filteredIntegrators = integrators
     .filter((integrator) => {
       const matchesLocation = filterLocation
@@ -130,7 +133,7 @@ const ManageIntegrators = () => {
       return searchString.includes(searchTerm.toLowerCase());
     });
 
-  // Dodawanie nowego integratora
+  // Adding a new integrator
   const handleAddIntegrator = async () => {
     const creatorID = user.userID;
     const managerID = isService ? selectedManagerID : creatorID;
@@ -151,24 +154,24 @@ const ManageIntegrators = () => {
       if (response && response.data) {
         setIntegrators((prev) => [...prev, response.data]);
         setNewIntegrator({ location: '', serialNumber: '' });
-        setShowAddIntegratorForm(false); // Ukryj formularz po dodaniu integratora
-        showSuccessMessage('Integrator został dodany pomyślnie.');
+        setShowAddIntegratorForm(false); // Hide form after adding
+        showSuccessMessage('Integrator added successfully.');
       }
     } catch (error) {
-      console.error('Błąd podczas dodawania integratora:', error);
-      showErrorMessage('Wystąpił błąd podczas dodawania integratora.');
+      console.error('Error adding integrator:', error);
+      showErrorMessage('An error occurred while adding the integrator.');
     }
   };
 
-  // Usuwanie (oznaczanie jako usunięty) integratora
-  const handleDeleteIntegrator = async (integratorID) => {
+  // Deleting or Restoring an integrator
+  const handleDeleteOrRestoreIntegrator = async (integratorID, isDeleted) => {
     try {
       const response = await axios.put(
         endpoints.editIntegrator(user.userID),
         {
           userID: isService ? selectedManagerID : user.userID,
           editData: {
-            isDeleted: true,
+            isDeleted: isDeleted,
             PK: integratorID,
           },
         },
@@ -183,28 +186,70 @@ const ManageIntegrators = () => {
         setIntegrators((prev) =>
           prev.map((integrator) =>
             integrator.PK === integratorID
-              ? { ...integrator, isDeleted: true }
+              ? { ...integrator, isDeleted: isDeleted }
               : integrator
           )
         );
-        showSuccessMessage('Integrator został usunięty pomyślnie.');
+        showSuccessMessage(
+          isDeleted
+            ? 'Integrator deleted successfully.'
+            : 'Integrator restored successfully.'
+        );
       }
     } catch (error) {
-      console.error('Błąd podczas usuwania integratora:', error);
-      showErrorMessage('Wystąpił błąd podczas usuwania integratora.');
+      console.error('Error updating integrator:', error);
+      showErrorMessage('An error occurred while updating the integrator.');
     }
   };
 
-  // Funkcja obsługująca wyświetlanie opcji (koło zębatego)
+  // Handling status change
+  const handleChangeStatus = async (integratorID, status) => {
+    try {
+      const response = await axios.put(
+        endpoints.editIntegrator(user.userID),
+        {
+          userID: isService ? selectedManagerID : user.userID,
+          editData: {
+            PK: integratorID,
+            editData: {
+              status: status,
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user.id_token}`,
+          },
+        }
+      );
+
+      if (response && response.data) {
+        setIntegrators((prev) =>
+          prev.map((integrator) =>
+            integrator.PK === integratorID ? response.data : integrator
+          )
+        );
+        showSuccessMessage('Integrator status updated successfully.');
+      }
+    } catch (error) {
+      console.error('Error changing integrator status:', error);
+      showErrorMessage(
+        'An error occurred while changing the integrator status.'
+      );
+    }
+  };
+
+  // Toggle options menu
   const toggleOptions = (integratorID) => {
     if (showOptionsIntegratorId === integratorID) {
       setShowOptionsIntegratorId(null);
     } else {
       setShowOptionsIntegratorId(integratorID);
+      setStatusDropdownIntegratorId(null); // Close status dropdown if open
     }
   };
 
-  // Zamykanie menu opcji po kliknięciu poza nim
+  // Close options menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -212,6 +257,7 @@ const ManageIntegrators = () => {
         !optionsMenuRef.current.contains(event.target)
       ) {
         setShowOptionsIntegratorId(null);
+        setStatusDropdownIntegratorId(null);
       }
     };
 
@@ -221,7 +267,7 @@ const ManageIntegrators = () => {
     };
   }, []);
 
-  // Funkcja obsługująca rozwijanie/zwijanie szczegółów integratora
+  // Toggle integrator details
   const toggleIntegratorDetails = (integratorID) => {
     if (expandedIntegrators.includes(integratorID)) {
       setExpandedIntegrators(
@@ -232,7 +278,7 @@ const ManageIntegrators = () => {
     }
   };
 
-  // Zamykanie rozwiniętych integratorów po kliknięciu poza listę
+  // Close expanded integrators when clicking outside
   useEffect(() => {
     const handleClickOutsideIntegrators = (event) => {
       if (
@@ -250,14 +296,36 @@ const ManageIntegrators = () => {
     };
   }, []);
 
-  // Funkcja obsługująca akcje z menu opcji
+  // Handle option selection from the options menu
   const handleOptionSelect = (integratorID, action) => {
-    // Placeholder for future logic to change status
     if (action === 'changeStatus') {
-      console.log(`Change status of integrator ${integratorID}`);
-      // Implement status change logic here
+      if (statusDropdownIntegratorId === integratorID) {
+        setStatusDropdownIntegratorId(null);
+      } else {
+        setStatusDropdownIntegratorId(integratorID);
+      }
+    } else if (action === 'delete') {
+      handleDeleteOrRestoreIntegrator(integratorID, true);
+    } else if (action === 'restore') {
+      handleDeleteOrRestoreIntegrator(integratorID, false);
     }
     setShowOptionsIntegratorId(null);
+  };
+
+  // Get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 0:
+        return 'status-yellow';
+      case 1:
+        return 'status-red';
+      case 2:
+        return 'status-green';
+      case 3:
+        return 'status-blue';
+      default:
+        return '';
+    }
   };
 
   return (
@@ -288,7 +356,7 @@ const ManageIntegrators = () => {
         </div>
       )}
 
-      {/* Górny pasek z przyciskiem dodawania integratora, filtrem i wyszukiwaniem */}
+      {/* Top bar with add button, filters, and search */}
       <div className='top-bar-integrators'>
         <div className='add-integrator-toggle'>
           <button
@@ -298,7 +366,7 @@ const ManageIntegrators = () => {
           </button>
         </div>
 
-        {/* Filtry */}
+        {/* Filters */}
         <div className='filters-integrators'>
           <select
             className='form-select'
@@ -336,7 +404,7 @@ const ManageIntegrators = () => {
           </select>
         </div>
 
-        {/* Wyszukiwanie integratorów */}
+        {/* Search bar */}
         <div className='search-bar-integrators'>
           <input
             type='text'
@@ -348,7 +416,7 @@ const ManageIntegrators = () => {
         </div>
       </div>
 
-      {/* Formularz dodawania nowego integratora */}
+      {/* Add Integrator Form */}
       {showAddIntegratorForm && (
         <div className='add-integrator-form'>
           <form
@@ -396,7 +464,7 @@ const ManageIntegrators = () => {
         </div>
       )}
 
-      {/* Lista integratorów */}
+      {/* Integrators List */}
       {loading ? (
         <div className='loader-container'>
           <GridLoader color='var(--primary-500)' />
@@ -407,9 +475,9 @@ const ManageIntegrators = () => {
             filteredIntegrators.map((integrator) => (
               <div
                 key={integrator.PK}
-                className={`integrator-card ${
-                  integrator.isDeleted ? 'integrator-deleted' : ''
-                }`}
+                className={`integrator-card ${getStatusColor(
+                  integrator.status
+                )} ${integrator.isDeleted ? 'integrator-deleted' : ''}`}
               >
                 <div className='integrator-header'>
                   <h3>
@@ -440,7 +508,7 @@ const ManageIntegrators = () => {
                   </div>
                 </div>
 
-                {/* Menu opcji */}
+                {/* Options Menu */}
                 {showOptionsIntegratorId === integrator.PK && (
                   <div
                     className='options-menu-integrator'
@@ -455,14 +523,49 @@ const ManageIntegrators = () => {
                       >
                         Zmień status
                       </li>
-                      <li onClick={() => handleDeleteIntegrator(integrator.PK)}>
-                        Usuń integrator
-                      </li>
+                      {!integrator.isDeleted ? (
+                        <li
+                          onClick={() =>
+                            handleOptionSelect(integrator.PK, 'delete')
+                          }
+                        >
+                          Usuń integrator
+                        </li>
+                      ) : (
+                        <li
+                          onClick={() =>
+                            handleOptionSelect(integrator.PK, 'restore')
+                          }
+                        >
+                          Przywróć integrator
+                        </li>
+                      )}
                     </ul>
                   </div>
                 )}
 
-                {/* Szczegóły integratora */}
+                {/* Status Dropdown */}
+                {statusDropdownIntegratorId === integrator.PK && (
+                  <div
+                    className='status-dropdown'
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {[0, 1, 2, 3].map((status) => (
+                      <button
+                        key={status}
+                        className='status-option'
+                        onClick={() => {
+                          handleChangeStatus(integrator.PK, status);
+                          setStatusDropdownIntegratorId(null);
+                        }}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Integrator Details */}
                 {expandedIntegrators.includes(integrator.PK) && (
                   <div className='integrator-details'>
                     <p>
@@ -471,7 +574,7 @@ const ManageIntegrators = () => {
                     <p>
                       <strong>Status:</strong> {integrator.status}
                     </p>
-                    {/* Dodatkowe informacje można dodać tutaj */}
+                    {/* Additional information can be added here */}
                   </div>
                 )}
               </div>

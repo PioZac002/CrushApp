@@ -1,12 +1,12 @@
 /* src/components/ManageGroups/manageGroups.css */
 
-/* Główny kontener */
+/* Main container */
 .manage-groups-container {
   padding: 20px;
   background-color: var(--primary-50);
 }
 
-/* Sekcja wyboru managera */
+/* Manager selection section */
 .manager-select {
   margin-bottom: 20px;
   display: flex;
@@ -18,7 +18,7 @@
   font-weight: bold;
 }
 
-/* Górny pasek z przyciskiem dodawania grupy, filtrem i wyszukiwaniem */
+/* Top bar with add group button, filter, and search */
 .top-bar {
   display: flex;
   flex-wrap: wrap;
@@ -44,7 +44,7 @@
   background-color: var(--primary-700);
 }
 
-/* Filtr grup */
+/* Group filter */
 .filter-section {
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@
   font-weight: bold;
 }
 
-/* Wyszukiwanie grup */
+/* Group search */
 .search-bar {
   position: relative;
   flex: 1;
@@ -76,7 +76,7 @@
   color: var(--textColor);
 }
 
-/* Formularz dodawania nowej grupy */
+/* Add new group form */
 .add-group-form {
   display: flex;
   align-items: center;
@@ -109,7 +109,7 @@
   background-color: var(--primary-700);
 }
 
-/* Lista grup */
+/* Group list */
 .group-list {
   display: flex;
   flex-wrap: wrap;
@@ -210,7 +210,7 @@
   background: var(--whiteColor);
   border: 1px solid var(--border-neutral);
   border-radius: 4px;
-  z-index: 1000; /* Zwiększony z-index */
+  z-index: 1000; /* Increased z-index */
 }
 
 .options-menu ul {
@@ -229,7 +229,7 @@
   background-color: var(--primary-100);
 }
 
-/* Stylizacja modala */
+/* Modal styling */
 .modal-overlay {
   position: fixed;
   top: 0;

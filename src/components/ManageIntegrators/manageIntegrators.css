@@ -1,12 +1,12 @@
 /* src/components/ManageIntegrators/manageIntegrators.css */
 
-/* Główny kontener */
+/* Main container */
 .manage-integrators-container {
   padding: 20px;
   background-color: var(--primary-50);
 }
 
-/* Sekcja wyboru managera */
+/* Manager selection section */
 .manager-select {
   margin-bottom: 20px;
   display: flex;
@@ -18,7 +18,7 @@
   font-weight: bold;
 }
 
-/* Górny pasek z przyciskiem dodawania integratora, filtrem i wyszukiwaniem */
+/* Top bar with add button, filters, and search */
 .top-bar-integrators {
   display: flex;
   flex-wrap: wrap;
@@ -56,7 +56,7 @@
   border-radius: 5px;
 }
 
-/* Wyszukiwanie integratorów */
+/* Search bar */
 .search-bar-integrators {
   position: relative;
   flex: 1;
@@ -77,7 +77,7 @@
   color: var(--textColor);
 }
 
-/* Formularz dodawania nowego integratora */
+/* Add Integrator Form */
 .add-integrator-form {
   margin-bottom: 20px;
 }
@@ -123,7 +123,7 @@
   background-color: var(--primary-700);
 }
 
-/* Lista integratorów */
+/* Integrators List */
 .integrators-list {
   display: flex;
   flex-wrap: wrap;
@@ -186,6 +186,7 @@
   margin-top: 15px;
 }
 
+/* Options Menu */
 .options-menu-integrator {
   position: absolute;
   top: 40px;
@@ -194,6 +195,8 @@
   border: 1px solid var(--border-neutral);
   border-radius: 4px;
   z-index: 1000;
+  width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .options-menu-integrator ul {
@@ -212,6 +215,53 @@
   background-color: var(--primary-100);
 }
 
+/* Status Dropdown */
+.status-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background: var(--whiteColor);
+  border: 1px solid var(--border-neutral);
+  border-radius: 4px;
+  z-index: 1001;
+  width: 120px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 5px;
+}
+
+.status-option {
+  padding: 10px;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--normalFontSize);
+  transition: background-color 0.3s ease;
+}
+
+.status-option:hover {
+  background-color: var(--primary-100);
+}
+
+/* Status Colors */
+.status-yellow {
+  background-color: var(--analogous-200);
+}
+
+.status-red {
+  background-color: var(--complementary-200);
+}
+
+.status-green {
+  background-color: var(--primary-200);
+}
+
+.status-blue {
+  background-color: var(--analogous2-200);
+}
+
+/* Loader */
 .loader-container {
   margin-top: 40px;
   display: flex;
@@ -235,5 +285,11 @@
   .filters-integrators,
   .search-bar-integrators {
     flex: 1 1 100%;
+  }
+
+  .options-menu-integrator,
+  .status-dropdown {
+    right: auto;
+    left: 10px;
   }
 }

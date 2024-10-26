@@ -17,6 +17,23 @@
 .add-worker-toggle {
   flex: 1;
 }
+.btn-restore {
+  padding: 8px 12px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: var(--smallFontSize);
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-restore:hover {
+  background-color: var(--primary-700);
+}
 
 .add-worker-toggle button {
   padding: 10px 20px;

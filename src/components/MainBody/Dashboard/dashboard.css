@@ -118,6 +118,7 @@
   align-items: center;
   padding: 10px;
   border-radius: 5px;
+  position: relative;
   transition: background-color 0.3s ease;
 }
 
@@ -139,6 +140,7 @@
 .integrator-actions {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .status-button {
@@ -154,6 +156,34 @@
   color: var(--primary-500);
 }
 
+/* Lista statusów */
+.status-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  display: flex;
+  background-color: var(--whiteColor);
+  border: 1px solid var(--border-neutral);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.status-option {
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--blackColor);
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.status-option:hover {
+  background-color: var(--primary-100);
+}
+
 /* Kolory statusów */
 .status-yellow {
   background-color: var(--analogous-200);
@@ -165,6 +195,10 @@
 
 .status-green {
   background-color: var(--primary-200);
+}
+
+.status-blue {
+  background-color: var(--analogous2-200);
 }
 
 /* Lista grup integratorów */

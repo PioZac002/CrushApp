@@ -28,12 +28,12 @@ const ManageWorkers = () => {
   const [showManagerSelect, setShowManagerSelect] = useState(true);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState(''); // Nowa zmienna stanu dla wyszukiwania
-  const [showAddWorkerForm, setShowAddWorkerForm] = useState(false); // Nowa zmienna stanu dla wyświetlania formularza
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddWorkerForm, setShowAddWorkerForm] = useState(false);
 
   const isService = user?.role?.isService;
 
-  // Funkcje do wyświetlania komunikatów
+  // Functions to display messages
   const showSuccessMessage = (message) => {
     setSuccessMessage(message);
     setTimeout(() => {
@@ -48,7 +48,7 @@ const ManageWorkers = () => {
     }, 5000);
   };
 
-  // Pobieranie managerów
+  // Fetch managers
   useEffect(() => {
     if (isService) {
       const fetchManagers = async () => {
@@ -67,7 +67,7 @@ const ManageWorkers = () => {
             setManagers(managerList);
           }
         } catch (error) {
-          console.error('Błąd podczas pobierania managerów:', error);
+          console.error('Error fetching managers:', error);
         } finally {
           setLoading(false);
         }
@@ -76,7 +76,7 @@ const ManageWorkers = () => {
     }
   }, [user, isService]);
 
-  // Pobieranie pracowników
+  // Fetch workers
   useEffect(() => {
     const fetchWorkers = async () => {
       setLoading(true);
@@ -90,7 +90,7 @@ const ManageWorkers = () => {
           setWorkers(response.data.workers);
         }
       } catch (error) {
-        console.error('Błąd podczas pobierania pracowników:', error);
+        console.error('Error fetching workers:', error);
       } finally {
         setLoading(false);
       }
@@ -98,7 +98,7 @@ const ManageWorkers = () => {
     fetchWorkers();
   }, [user]);
 
-  // Dodawanie nowego pracownika
+  // Add new worker
   const handleAddWorker = async () => {
     try {
       const requestBody = {
@@ -155,24 +155,24 @@ const ManageWorkers = () => {
           phone_number: '',
           address: '',
         });
-        setShowAddWorkerForm(false); // Ukryj formularz po dodaniu pracownika
+        setShowAddWorkerForm(false); // Hide form after adding worker
         showSuccessMessage('Pracownik został dodany pomyślnie.');
       }
     } catch (error) {
-      console.error('Błąd podczas dodawania pracownika:', error);
+      console.error('Error adding worker:', error);
       showErrorMessage('Wystąpił błąd podczas dodawania pracownika.');
     }
   };
 
-  // Usuwanie pracownika
-  const handleDeleteWorker = async (workerID) => {
+  // Function to change worker status (delete or restore)
+  const handleChangeWorkerStatus = async (workerID, isDeleted) => {
     try {
       const response = await axios.put(
         endpoints.editWorker(user.userID),
         {
           userID: workerID,
           editData: {
-            isDeleted: true,
+            isDeleted: isDeleted,
           },
         },
         {
@@ -185,18 +185,24 @@ const ManageWorkers = () => {
       if (response && response.data) {
         setWorkers((prev) =>
           prev.map((worker) =>
-            worker.PK === workerID ? { ...worker, isDeleted: true } : worker
+            worker.PK === workerID
+              ? { ...worker, isDeleted: isDeleted }
+              : worker
           )
         );
-        showSuccessMessage('Pracownik został usunięty pomyślnie.');
+        if (isDeleted) {
+          showSuccessMessage('Pracownik został usunięty pomyślnie.');
+        } else {
+          showSuccessMessage('Pracownik został przywrócony pomyślnie.');
+        }
       }
     } catch (error) {
-      console.error('Błąd podczas usuwania pracownika:', error);
-      showErrorMessage('Wystąpił błąd podczas usuwania pracownika.');
+      console.error('Error changing worker status:', error);
+      showErrorMessage('Wystąpił błąd podczas zmiany statusu pracownika.');
     }
   };
 
-  // Filtracja pracowników
+  // Filtering workers
   const filteredWorkers = workers
     .filter((worker) => {
       if (filter === 'active') return !worker.isDeleted;
@@ -219,7 +225,7 @@ const ManageWorkers = () => {
 
   return (
     <div className='manage-workers-container'>
-      {/* Górny pasek z przyciskiem dodawania pracownika, filtrem i wyszukiwaniem */}
+      {/* Top bar with add worker button, filter, and search */}
       <div className='top-bar-workers'>
         <div className='add-worker-toggle'>
           <button onClick={() => setShowAddWorkerForm(!showAddWorkerForm)}>
@@ -227,7 +233,7 @@ const ManageWorkers = () => {
           </button>
         </div>
 
-        {/* Filtr pracowników */}
+        {/* Worker filter */}
         <div className='filter-group'>
           <label htmlFor='statusFilter'>Filtruj według statusu:</label>
           <select
@@ -241,7 +247,7 @@ const ManageWorkers = () => {
           </select>
         </div>
 
-        {/* Wyszukiwanie pracowników */}
+        {/* Worker search */}
         <div className='search-bar-workers'>
           <input
             type='text'
@@ -253,7 +259,7 @@ const ManageWorkers = () => {
         </div>
       </div>
 
-      {/* Formularz dodawania nowego pracownika */}
+      {/* Add new worker form */}
       {showAddWorkerForm && (
         <>
           <h2 className='section-title'>Dodaj nowego pracownika</h2>
@@ -341,7 +347,10 @@ const ManageWorkers = () => {
                         name='role'
                         value=''
                         checked={selectedRole === ''}
-                        onChange={() => setShowManagerSelect(true)}
+                        onChange={() => {
+                          setSelectedRole('');
+                          setShowManagerSelect(true);
+                        }}
                       />
                       Pracownik (bez roli)
                     </label>
@@ -471,12 +480,19 @@ const ManageWorkers = () => {
                 </h5>
                 <p>Email: {email}</p>
                 <p>Status: {worker.isDeleted ? 'Usunięty' : 'Aktywny'}</p>
-                {!worker.isDeleted && (
+                {!worker.isDeleted ? (
                   <button
                     className='btn-delete'
-                    onClick={() => handleDeleteWorker(worker.PK)}
+                    onClick={() => handleChangeWorkerStatus(worker.PK, true)}
                   >
                     Usuń
+                  </button>
+                ) : (
+                  <button
+                    className='btn-restore'
+                    onClick={() => handleChangeWorkerStatus(worker.PK, false)}
+                  >
+                    Przywróć
                   </button>
                 )}
               </div>

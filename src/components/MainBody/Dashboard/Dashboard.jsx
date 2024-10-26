@@ -1,11 +1,12 @@
 // src/components/Dashboard/Dashboard.jsx
 
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import './dashboard.css';
 import { AuthContext } from '../../../context/AuthContext';
 import axios from 'axios';
 import { endpoints } from '../../../api/api';
 import { GridLoader } from 'react-spinners';
+import ToastContainer from '../../ToastContainer/ToastContainer';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -18,21 +19,39 @@ const Dashboard = () => {
   const [showMoreWorkers, setShowMoreWorkers] = useState(false);
   const [showMoreIntegrators, setShowMoreIntegrators] = useState(false);
   const [showMoreGroups, setShowMoreGroups] = useState(false);
+  const [statusDropdownIntegratorId, setStatusDropdownIntegratorId] =
+    useState(null);
+
+  // Added states for success and error messages
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Ref for the currently open dropdown
+  const statusDropdownRef = useRef(null);
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
+  const isWorker = !isService && !isManager; // Determine if user is a worker
 
   useEffect(() => {
-    const fetchWorkers = async () => {
+    const fetchDataForManagersAndService = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(endpoints.getWorkers(user.userID), {
-          headers: {
-            Authorization: user.id_token,
-          },
-        });
-        if (response && response.data && response.data.workers) {
-          const workersList = response.data.workers;
+        // Fetch Workers
+        const workersResponse = await axios.get(
+          endpoints.getWorkers(user.userID),
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
+        );
+        if (
+          workersResponse &&
+          workersResponse.data &&
+          workersResponse.data.workers
+        ) {
+          const workersList = workersResponse.data.workers;
           setWorkers(workersList);
 
           if (isService) {
@@ -42,26 +61,47 @@ const Dashboard = () => {
             setManagers(managersList);
           }
         }
+
+        // Fetch Integrators
+        const managerID = isService ? selectedManagerID : '';
+        const integratorsResponse = await axios.get(
+          endpoints.getIntegrators(user.userID, managerID),
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
+        );
+        if (integratorsResponse && integratorsResponse.data) {
+          setIntegrators(integratorsResponse.data.integrators);
+        }
+
+        // Fetch Integrator Groups
+        const integratorGroupsResponse = await axios.get(
+          endpoints.getIntegratorGroups(user.userID, managerID),
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
+        );
+        if (integratorGroupsResponse && integratorGroupsResponse.data) {
+          setIntegratorGroups(integratorGroupsResponse.data.integratorGroups);
+        }
       } catch (error) {
-        console.error('Błąd podczas pobierania pracowników:', error);
+        console.error('Błąd podczas pobierania danych:', error);
+        setErrorMessage('Wystąpił błąd podczas pobierania danych.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWorkers();
-  }, [user, isService]);
-
-  useEffect(() => {
-    const fetchIntegrators = async () => {
-      if (!selectedManagerID && !isManager) return;
-
+    const fetchDataForWorkers = async () => {
       setLoading(true);
-      const managerID = isService ? selectedManagerID : '';
-
       try {
+        // Fetch Integrators assigned to the worker
         const response = await axios.get(
-          endpoints.getIntegrators(user.userID, managerID),
+          endpoints.getIntegrators(user.userID),
           {
             headers: {
               Authorization: user.id_token,
@@ -73,46 +113,18 @@ const Dashboard = () => {
         }
       } catch (error) {
         console.error('Błąd podczas pobierania integratorów:', error);
+        setErrorMessage('Wystąpił błąd podczas pobierania integratorów.');
       } finally {
         setLoading(false);
       }
     };
 
     if (isService || isManager) {
-      fetchIntegrators();
+      fetchDataForManagersAndService();
+    } else if (isWorker) {
+      fetchDataForWorkers();
     }
-  }, [user, selectedManagerID, isManager, isService]);
-
-  useEffect(() => {
-    const fetchIntegratorGroups = async () => {
-      if (!selectedManagerID && !isManager) return;
-
-      setLoading(true);
-      const managerID = isService ? selectedManagerID : '';
-
-      try {
-        const response = await axios.get(
-          endpoints.getIntegratorGroups(user.userID, managerID),
-          {
-            headers: {
-              Authorization: user.id_token,
-            },
-          }
-        );
-        if (response && response.data) {
-          setIntegratorGroups(response.data.integratorGroups);
-        }
-      } catch (error) {
-        console.error('Błąd podczas pobierania grup integratorów:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (isService || isManager) {
-      fetchIntegratorGroups();
-    }
-  }, [user, selectedManagerID, isManager, isService]);
+  }, [user, isService, isManager, isWorker, selectedManagerID]);
 
   const handleManagerChange = (e) => {
     setSelectedManagerID(e.target.value);
@@ -126,10 +138,71 @@ const Dashboard = () => {
         return 'status-red';
       case 2:
         return 'status-green';
+      case 3:
+        return 'status-blue';
       default:
         return '';
     }
   };
+
+  const handleChangeStatus = async (integratorID, status) => {
+    try {
+      const response = await axios.put(
+        endpoints.editIntegrator(user.userID),
+        {
+          userID: isService ? selectedManagerID : user.userID,
+          editData: {
+            editData: {
+              PK: integratorID,
+              status: status,
+            },
+          },
+        },
+        {
+          headers: {
+            Authorization: user.id_token,
+          },
+        }
+      );
+
+      if (response && response.data) {
+        setIntegrators((prev) =>
+          prev.map((integrator) =>
+            integrator.PK === integratorID ? response.data : integrator
+          )
+        );
+        setSuccessMessage('Status integratora został zmieniony pomyślnie.');
+      }
+    } catch (error) {
+      console.error('Błąd podczas zmiany statusu integratora:', error);
+      setErrorMessage('Wystąpił błąd podczas zmiany statusu integratora.');
+    }
+  };
+
+  const toggleStatusDropdown = (integratorID) => {
+    if (statusDropdownIntegratorId === integratorID) {
+      setStatusDropdownIntegratorId(null);
+    } else {
+      setStatusDropdownIntegratorId(integratorID);
+    }
+  };
+
+  // Close the dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        statusDropdownRef.current &&
+        !statusDropdownRef.current.contains(event.target)
+      ) {
+        setStatusDropdownIntegratorId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [statusDropdownIntegratorId]);
 
   const renderWorkersList = () => (
     <div className='dashboard-worker-list'>
@@ -190,10 +263,38 @@ const Dashboard = () => {
               <div className='integrator-location'>{integrator.location}</div>
             </div>
             <div className='integrator-actions'>
-              {/* Ikonka do zmiany statusu */}
-              <button className='status-button'>
+              {/* Status change button */}
+              <button
+                className='status-button'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleStatusDropdown(integrator.PK);
+                }}
+              >
                 <i className='bi bi-arrow-repeat'></i>
               </button>
+              {/* Status dropdown */}
+              {statusDropdownIntegratorId === integrator.PK && (
+                <div
+                  className='status-dropdown'
+                  ref={statusDropdownRef}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {[0, 1, 2, 3].map((status) => (
+                    <button
+                      key={status}
+                      className='status-option'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleChangeStatus(integrator.PK, status);
+                        setStatusDropdownIntegratorId(null);
+                      }}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )
@@ -218,6 +319,51 @@ const Dashboard = () => {
     </div>
   );
 
+  // Worker View
+  if (isWorker) {
+    return (
+      <section className='dashboard-section'>
+        <div className='dashboard-container'>
+          <div className='container-header'>
+            <i className='bi bi-tools container-icon'></i>
+            <h5 className='container-title'>Lista Integratorów</h5>
+          </div>
+          <div className='container-content'>
+            {loading ? (
+              <div className='loader-container'>
+                <GridLoader color='var(--primary-500)' />
+              </div>
+            ) : (
+              <>
+                {renderIntegratorList()}
+                {integrators.length === 0 && (
+                  <p>Brak integratorów do wyświetlenia.</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Display success and error messages */}
+        {successMessage && (
+          <ToastContainer
+            message={successMessage}
+            onClose={() => setSuccessMessage('')}
+            variant='success'
+          />
+        )}
+        {errorMessage && (
+          <ToastContainer
+            message={errorMessage}
+            onClose={() => setErrorMessage('')}
+            variant='danger'
+          />
+        )}
+      </section>
+    );
+  }
+
+  // Manager and Service View
   return (
     <section className='dashboard-section'>
       {isService && (
@@ -350,6 +496,22 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Display success and error messages */}
+      {successMessage && (
+        <ToastContainer
+          message={successMessage}
+          onClose={() => setSuccessMessage('')}
+          variant='success'
+        />
+      )}
+      {errorMessage && (
+        <ToastContainer
+          message={errorMessage}
+          onClose={() => setErrorMessage('')}
+          variant='danger'
+        />
+      )}
     </section>
   );
 };

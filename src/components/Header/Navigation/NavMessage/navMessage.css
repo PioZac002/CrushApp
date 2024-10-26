@@ -1,0 +1,77 @@
+/* navMessage.css */
+
+.nav-item .nav-link.nav-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--PrimaryColor);
+}
+
+.nav-item .badge-number {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  background-color: var(--complementary-500);
+  color: var(--whiteColor);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 50%;
+}
+
+.dropdown-menu.notifications {
+  width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notifications .dropdown-header {
+  font-weight: bold;
+  font-size: 14px;
+  padding: 10px 15px;
+}
+
+.notifications .notification-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 15px;
+  position: relative;
+}
+
+.notifications .notification-item i {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.notifications .notification-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.notifications .notification-item .btn-notification-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--textColor);
+  cursor: pointer;
+}
+
+.notifications .notification-item .btn-notification-close:hover {
+  color: var(--complementary-500);
+}
+
+.notifications .notification-item div {
+  flex: 1;
+}
+
+.notifications.show {
+  display: block;
+}
+
+@media (max-width: 576px) {
+  .dropdown-menu.notifications {
+    width: 100%;
+  }
+}
