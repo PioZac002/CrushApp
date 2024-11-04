@@ -7,7 +7,10 @@ export const endpoints = {
   login: `${API_BASE_URL_USER}/login`,
   firstLogin: (username) => `${API_BASE_URL_USER}/firstLogin/${username}`,
   register: (creatorID) => `${API_BASE_URL_USER}/register/${creatorID}`,
-  getWorkers: (userID) => `${API_BASE_URL_USER}/getWorkers/${userID}`,
+  getWorkers: (userID, managerID = '') =>
+    managerID
+      ? `${API_BASE_URL_USER}/getWorkers/${userID}?managerID=${managerID}`
+      : `${API_BASE_URL_USER}/getWorkers/${userID}`,
   getIntegrators: (userID, managerID = '') =>
     managerID
       ? `${API_BASE_URL_INTEGRATORS}/integrator/${userID}?createdFor=${managerID}`
@@ -38,9 +41,11 @@ export const endpoints = {
     managerID
       ? `${API_BASE_URL_INTEGRATORS}/report/${requesterID}?managerID=${managerID}`
       : `${API_BASE_URL_INTEGRATORS}/report/${requesterID}`,
-
   getAllReports: (userID) => `${API_BASE_URL_INTEGRATORS}/report/${userID}/all`,
-
   getReportData: (userID, reportID) =>
     `${API_BASE_URL_INTEGRATORS}/report/${userID}?reportID=${reportID}`,
+
+  // New endpoint for fetching user-to-group associations
+  getGroupsForUsers: (userID) =>
+    `${API_BASE_URL_USER}/getGroupsForUsers/${userID}`,
 };

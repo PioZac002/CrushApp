@@ -32,6 +32,7 @@ const ManageWorkers = () => {
   const [showAddWorkerForm, setShowAddWorkerForm] = useState(false);
 
   const isService = user?.role?.isService;
+  const isManager = user?.role?.isManager;
 
   // Functions to display messages
   const showSuccessMessage = (message) => {
@@ -136,6 +137,11 @@ const ManageWorkers = () => {
         requestBody.manager = selectedManagerID;
       }
 
+      // Dodane sprawdzenie dla managera
+      if (isManager) {
+        requestBody.manager = user.userID;
+      }
+
       const response = await axios.post(
         endpoints.register(user.userID),
         requestBody,
@@ -155,7 +161,7 @@ const ManageWorkers = () => {
           phone_number: '',
           address: '',
         });
-        setShowAddWorkerForm(false); // Hide form after adding worker
+        setShowAddWorkerForm(false); // Ukryj formularz po dodaniu pracownika
         showSuccessMessage('Pracownik został dodany pomyślnie.');
       }
     } catch (error) {

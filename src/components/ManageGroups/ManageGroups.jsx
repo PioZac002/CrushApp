@@ -19,14 +19,7 @@ const ManageGroups = () => {
   const [groups, setGroups] = useState([]);
   const [integrators, setIntegrators] = useState({});
   const [groupUsers, setGroupUsers] = useState({});
-  // Usunięto poprzedni stan loading
-  // const [loading, setLoading] = useState(false);
-
-  // Dodano nowe stany ładowania
-  const [loadingManagers, setLoadingManagers] = useState(false);
-  const [loadingGroups, setLoadingGroups] = useState(false);
-  const [loadingGroupDetails, setLoadingGroupDetails] = useState(false);
-
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -42,7 +35,7 @@ const ManageGroups = () => {
   const optionsMenuRef = useRef(null);
   const groupListRef = useRef(null);
 
-  // Dodano expandedGroups dla zarządzania stanem interfejsu użytkownika
+  // Expanded groups state
   const [expandedGroups, setExpandedGroups] = useState([]);
 
   const isService = user?.role?.isService;
@@ -62,11 +55,11 @@ const ManageGroups = () => {
     }, 5000);
   };
 
-  // Pobieranie managerów (dla widoku serwisowego)
+  // Fetch managers (for service view)
   useEffect(() => {
     if (isService) {
       const fetchManagers = async () => {
-        setLoadingManagers(true);
+        setLoading(true);
         try {
           const response = await axios.get(endpoints.getWorkers(user.userID), {
             headers: {
@@ -82,17 +75,105 @@ const ManageGroups = () => {
         } catch (error) {
           console.error('Error fetching managers:', error);
         } finally {
-          setLoadingManagers(false);
+          setLoading(false);
         }
       };
       fetchManagers();
     }
   }, [user, isService]);
 
-  // Pobieranie grup i ich szczegółów
+  // Fetch group users
+  const fetchGroupUsers = async () => {
+    try {
+      const currentUserID = user.userID;
+      const managerID = isService ? selectedManagerID : '';
+      const groupsForUsersUrl = endpoints.getGroupsForUsers(currentUserID);
+
+      // Dodaj managerID do zapytania, jeśli jest to serwisant
+      const requestUrl = managerID
+        ? `${groupsForUsersUrl}?managerID=${managerID}`
+        : groupsForUsersUrl;
+
+      const groupUsersResponse = await axios.get(requestUrl, {
+        headers: {
+          Authorization: user.id_token,
+        },
+      });
+
+      if (groupUsersResponse && groupUsersResponse.data) {
+        const groupUsersData = groupUsersResponse.data.groupsForUsers || [];
+
+        // Inicjalizacja mapowania groupID do listy użytkowników
+        const groupUsersMap = {};
+        const userIDs = [];
+
+        // Przetwarzanie danych użytkowników w grupach
+        groupUsersData.forEach((userGroupsObj) => {
+          const userID = Object.keys(userGroupsObj)[0];
+          const groups = userGroupsObj[userID];
+
+          userIDs.push(userID);
+
+          groups.forEach((group) => {
+            const groupID = String(group.PK);
+            if (!groupUsersMap[groupID]) {
+              groupUsersMap[groupID] = [];
+            }
+            groupUsersMap[groupID].push({
+              PK: userID,
+              name: '', // Zostanie uzupełnione później
+            });
+          });
+        });
+
+        // Pobranie szczegółów użytkowników
+        const workersResponse = await axios.get(
+          endpoints.getWorkers(user.userID, managerID),
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
+        );
+
+        if (workersResponse && workersResponse.data) {
+          const workersData = workersResponse.data.workers || [];
+          const userIDToNameMap = {};
+
+          workersData.forEach((worker) => {
+            const userID = worker.PK;
+            const givenNameAttr = worker.cognitoAttributes?.find(
+              (attr) => attr.Name === 'given_name'
+            );
+            const familyNameAttr = worker.cognitoAttributes?.find(
+              (attr) => attr.Name === 'family_name'
+            );
+            const name = `${givenNameAttr ? givenNameAttr.Value : ''} ${
+              familyNameAttr ? familyNameAttr.Value : ''
+            }`.trim();
+            userIDToNameMap[userID] = name || userID;
+          });
+
+          // Aktualizacja mapy groupUsersMap z nazwami użytkowników
+          Object.keys(groupUsersMap).forEach((groupID) => {
+            groupUsersMap[groupID] = groupUsersMap[groupID].map((user) => ({
+              PK: user.PK,
+              name: userIDToNameMap[user.PK] || user.PK,
+            }));
+          });
+        }
+
+        setGroupUsers(groupUsersMap);
+      }
+    } catch (error) {
+      console.error('Error fetching group users:', error);
+    }
+  };
+
+  // Fetch groups and their details
   useEffect(() => {
     const fetchGroupsAndDetails = async () => {
-      setLoadingGroups(true);
+      setLoading(true);
       try {
         const managerID = isService ? selectedManagerID : '';
         const requestUrl = endpoints.getIntegratorGroups(
@@ -108,19 +189,16 @@ const ManageGroups = () => {
 
         if (response && response.data) {
           const fetchedGroups = response.data.integratorGroups || [];
+
           setGroups(fetchedGroups);
 
-          // Pobieranie szczegółów dla każdej grupy
-          setLoadingGroupDetails(true);
-          await Promise.all(
-            fetchedGroups.map((group) => fetchGroupDetails(group.PK))
-          );
-          setLoadingGroupDetails(false);
+          // Fetch group-user associations
+          await fetchGroupUsers();
         }
       } catch (error) {
         console.error('Error fetching groups and details:', error);
       } finally {
-        setLoadingGroups(false);
+        setLoading(false);
       }
     };
 
@@ -129,16 +207,20 @@ const ManageGroups = () => {
     }
   }, [user, selectedManagerID, isManager, isService]);
 
-  // Pobieranie dostępnych użytkowników (pracowników) do dodania do grup
+  // Fetch available users (workers) for adding to groups
   useEffect(() => {
     const fetchAvailableUsers = async () => {
       try {
         const currentUserID = user.userID;
-        const response = await axios.get(endpoints.getWorkers(currentUserID), {
-          headers: {
-            Authorization: user.id_token,
-          },
-        });
+        const managerID = isService ? selectedManagerID : '';
+        const response = await axios.get(
+          endpoints.getWorkers(currentUserID, managerID),
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
+        );
         if (response && response.data) {
           const workers = response.data.workers || [];
           const processedWorkers = workers.map((worker) => {
@@ -153,7 +235,7 @@ const ManageGroups = () => {
             }`.trim();
             return {
               ...worker,
-              name,
+              name: name || worker.PK,
             };
           });
           setAvailableUsers(processedWorkers);
@@ -169,9 +251,9 @@ const ManageGroups = () => {
     ) {
       fetchAvailableUsers();
     }
-  }, [showModal, modalData, user]);
+  }, [showModal, modalData, user, isService, selectedManagerID]);
 
-  // Pobieranie integratorów do dodania/usunięcia z grup
+  // Fetch integrators for adding/removing to/from groups
   useEffect(() => {
     const fetchAvailableIntegrators = async () => {
       try {
@@ -202,7 +284,7 @@ const ManageGroups = () => {
     }
   }, [showModal, modalData, user, isService, selectedManagerID]);
 
-  // Dodawanie grupy
+  // Add group
   const handleAddGroup = async () => {
     if (!groupName) {
       return alert('Proszę podać nazwę grupy');
@@ -228,11 +310,15 @@ const ManageGroups = () => {
       if (response && response.data) {
         setGroups([...groups, response.data]);
         setGroupName('');
-        setShowAddGroup(false); // Ukryj formularz po dodaniu grupy
+        setShowAddGroup(false); // Hide form after adding group
         showSuccessMessage('Grupa została dodana pomyślnie.');
 
-        // Pobierz szczegóły dla nowej grupy
-        await fetchGroupDetails(response.data.PK);
+        // Initialize the group's users as an empty array
+        const groupID = String(response.data.PK);
+        setGroupUsers((prevGroupUsers) => ({
+          ...prevGroupUsers,
+          [groupID]: [],
+        }));
       }
     } catch (error) {
       console.error('Error adding group:', error);
@@ -240,10 +326,11 @@ const ManageGroups = () => {
     }
   };
 
-  // Edycja lub usuwanie grupy
+  // Edit or delete group
   const editGroup = async (groupID, groupName, isDeleted) => {
     try {
       const editData = {
+        userID: isService ? selectedManagerID : user.userID,
         editData: {
           PK: groupID,
           integratorGroupName:
@@ -253,17 +340,12 @@ const ManageGroups = () => {
       };
 
       if (typeof isDeleted === 'boolean') {
-        editData.isDeleted = isDeleted;
+        editData.editData.isDeleted = isDeleted;
       }
-
-      const requestBody = {
-        userID: isService ? selectedManagerID : user.userID,
-        editData: editData,
-      };
 
       const response = await axios.put(
         endpoints.editGroup(user.userID),
-        requestBody,
+        editData,
         {
           headers: {
             Authorization: user.id_token,
@@ -285,22 +367,19 @@ const ManageGroups = () => {
     }
   };
 
-  // Rozwijanie i zwijanie szczegółów grupy
-  const toggleGroupDetails = (groupID) => {
-    if (expandedGroups.includes(groupID)) {
-      setExpandedGroups(expandedGroups.filter((id) => id !== groupID));
-    } else {
-      setExpandedGroups([...expandedGroups, groupID]);
-    }
-  };
-
-  // Pobieranie szczegółów grupy
+  // Fetch group details function
   const fetchGroupDetails = async (groupID) => {
     try {
       const managerID = isService ? selectedManagerID : '';
-      const requestUrl = `${endpoints.getGroupDetails(
-        user.userID
-      )}?groups=${groupID}${managerID ? `&groupsFor=${managerID}` : ''}`;
+      const creatorID = user.userID;
+
+      // Build the request URL with query parameters
+      let requestUrl = `${endpoints.getGroupDetails(
+        creatorID
+      )}?groups=${groupID}`;
+      if (isService && managerID) {
+        requestUrl += `&groupsFor=${managerID}`;
+      }
 
       const response = await axios.get(requestUrl, {
         headers: {
@@ -311,7 +390,7 @@ const ManageGroups = () => {
       if (response && response.data) {
         const integratorsData = [];
 
-        // Przetwarzanie integratorów
+        // Process integrators
         if (response.data.integratorsInGroups) {
           response.data.integratorsInGroups.forEach((groupData) => {
             Object.values(groupData).forEach((integratorList) => {
@@ -328,92 +407,20 @@ const ManageGroups = () => {
           ...prev,
           [groupID]: integratorsData,
         }));
-
-        // Pobieranie użytkowników w grupie
-        await fetchWorkersInGroup(groupID);
       }
     } catch (error) {
       console.error('Error fetching group details:', error);
     }
   };
 
-  const fetchWorkersInGroup = async (groupID) => {
-    try {
-      const currentUserID = user.userID;
-      const workersResponse = await axios.get(
-        endpoints.getWorkers(currentUserID),
-        {
-          headers: {
-            Authorization: user.id_token,
-          },
-        }
-      );
-
-      if (
-        workersResponse &&
-        workersResponse.data &&
-        workersResponse.data.workers
-      ) {
-        const workers = workersResponse.data.workers;
-        const usersData = [];
-
-        await Promise.all(
-          workers.map(async (worker) => {
-            const workerID = worker.PK;
-            const workerGroupsResponse = await axios.get(
-              `${endpoints.getIntegratorGroups(
-                user.userID
-              )}?groupsFor=${workerID}`,
-              {
-                headers: {
-                  Authorization: user.id_token,
-                },
-              }
-            );
-
-            const workerGroups =
-              workerGroupsResponse.data.integratorGroups || [];
-
-            if (workerGroups.some((g) => g.PK === groupID)) {
-              const givenNameAttr = worker.cognitoAttributes?.find(
-                (attr) => attr.Name === 'given_name'
-              );
-              const familyNameAttr = worker.cognitoAttributes?.find(
-                (attr) => attr.Name === 'family_name'
-              );
-              const name = `${givenNameAttr ? givenNameAttr.Value : ''} ${
-                familyNameAttr ? familyNameAttr.Value : ''
-              }`.trim();
-
-              console.log(`User: ${name}, Group: ${groupID}`);
-
-              usersData.push({
-                PK: worker.PK,
-                name,
-              });
-            }
-          })
-        );
-
-        // Aktualizacja stanu groupUsers
-        setGroupUsers((prev) => ({
-          ...prev,
-          [groupID]: usersData,
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching workers in group:', error);
-    }
-  };
-
-  // Zamknięcie rozwiniętych grup po kliknięciu poza nimi
+  // Close expanded groups when clicking outside
   useEffect(() => {
     const handleClickOutsideGroups = (event) => {
       if (
         groupListRef.current &&
         !groupListRef.current.contains(event.target)
       ) {
-        // Odkomentuj poniższą linię, jeśli chcesz zamknąć rozwinięte grupy po kliknięciu poza nimi
+        // Uncomment the line below if you want to close expanded groups when clicking outside
         // setExpandedGroups([]);
       }
     };
@@ -425,7 +432,7 @@ const ManageGroups = () => {
     };
   }, []);
 
-  // Przełączanie menu opcji
+  // Toggle options menu
   const toggleOptions = (groupID) => {
     if (showOptionsGroupId === groupID) {
       setShowOptionsGroupId(null);
@@ -434,7 +441,7 @@ const ManageGroups = () => {
     }
   };
 
-  // Zamknięcie menu opcji po kliknięciu poza nim
+  // Close options menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -451,14 +458,14 @@ const ManageGroups = () => {
     };
   }, []);
 
-  // Obsługa wyboru opcji
+  // Handle option selection
   const handleOptionSelect = (groupID, action) => {
     setModalData({ groupID, action });
     setShowModal(true);
     setShowOptionsGroupId(null);
   };
 
-  // Dodawanie lub usuwanie integratora z grupy
+  // Add or remove integrator from group
   const addIntegratorToGroup = async (integratorID, groupID) => {
     try {
       const creatorID = user.userID;
@@ -483,7 +490,7 @@ const ManageGroups = () => {
 
       if (response && response.data) {
         showSuccessMessage('Integrator został dodany do grupy.');
-        // Odśwież szczegóły grupy
+        // Refresh group details
         await fetchGroupDetails(groupID);
         setSelectedIntegratorID('');
       }
@@ -518,7 +525,7 @@ const ManageGroups = () => {
 
       if (response && response.data) {
         showSuccessMessage('Integrator został usunięty z grupy.');
-        // Odśwież szczegóły grupy
+        // Refresh group details
         await fetchGroupDetails(groupID);
         setSelectedIntegratorID('');
       }
@@ -528,7 +535,7 @@ const ManageGroups = () => {
     }
   };
 
-  // Dodawanie lub usuwanie użytkownika z grupy
+  // Add or remove user from group
   const addUserToGroup = async (userIDToAdd, groupID) => {
     try {
       const creatorID = user.userID;
@@ -553,9 +560,12 @@ const ManageGroups = () => {
 
       if (response && response.data) {
         showSuccessMessage('Użytkownik został dodany do grupy.');
-        // Odśwież szczegóły grupy
-        await fetchGroupDetails(groupID);
         setSelectedUserID('');
+
+        // Ponownie pobieramy użytkowników w grupach
+        await fetchGroupUsers();
+      } else {
+        showErrorMessage('Nie udało się dodać użytkownika do grupy.');
       }
     } catch (error) {
       console.error('Error adding user to group:', error);
@@ -588,9 +598,12 @@ const ManageGroups = () => {
 
       if (response && response.data) {
         showSuccessMessage('Użytkownik został usunięty z grupy.');
-        // Odśwież szczegóły grupy
-        await fetchGroupDetails(groupID);
         setSelectedUserID('');
+
+        // Ponownie pobieramy użytkowników w grupach
+        await fetchGroupUsers();
+      } else {
+        showErrorMessage('Nie udało się usunąć użytkownika z grupy.');
       }
     } catch (error) {
       console.error('Error removing user from group:', error);
@@ -598,7 +611,7 @@ const ManageGroups = () => {
     }
   };
 
-  // Filtrowanie grup
+  // Filter groups
   const filteredGroups = groups
     .filter((group) => {
       if (filter === 'active') return !group.isDeleted;
@@ -609,19 +622,9 @@ const ManageGroups = () => {
       group.integratorGroupName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  const loading = loadingManagers || loadingGroups || loadingGroupDetails;
-
-  if (loading) {
-    return (
-      <div className='loader-container'>
-        <GridLoader color='var(--primary-500)' />
-      </div>
-    );
-  }
-
   return (
     <div className='manage-groups-container'>
-      {/* Dla Serwisu: Wybór Managera */}
+      {/* For Service: Manager selection */}
       {isService && (
         <div className='manager-select'>
           <label htmlFor='manager'>Wybierz Managera:</label>
@@ -648,7 +651,7 @@ const ManageGroups = () => {
         </div>
       )}
 
-      {/* Górny pasek z przyciskiem dodawania grupy, filtrem i wyszukiwaniem */}
+      {/* Top bar with add group button, filter, and search */}
       <div className='top-bar'>
         <div className='add-group-toggle'>
           <button onClick={() => setShowAddGroup(!showAddGroup)}>
@@ -656,7 +659,7 @@ const ManageGroups = () => {
           </button>
         </div>
 
-        {/* Filtrowanie grup */}
+        {/* Group filter */}
         <div className='filter-section'>
           <label htmlFor='statusFilter'>Filtruj grupy:</label>
           <select
@@ -671,7 +674,7 @@ const ManageGroups = () => {
           </select>
         </div>
 
-        {/* Wyszukiwanie grup */}
+        {/* Group search */}
         <div className='search-bar'>
           <input
             type='text'
@@ -683,7 +686,7 @@ const ManageGroups = () => {
         </div>
       </div>
 
-      {/* Formularz dodawania grupy */}
+      {/* Add Group Form */}
       {showAddGroup && (
         <div className='add-group-form'>
           <input
@@ -701,152 +704,178 @@ const ManageGroups = () => {
         </div>
       )}
 
-      {/* Lista grup */}
+      {/* Group List */}
       <div className='group-list' ref={groupListRef}>
         {filteredGroups.length > 0 ? (
-          filteredGroups.map((group) => (
-            <div
-              className={`group-card ${group.isDeleted ? 'group-deleted' : ''}`}
-              key={group.PK}
-            >
-              <div className='group-header'>
-                <h3>
-                  {group.integratorGroupName}
-                  {group.isDeleted && (
-                    <TiDeleteOutline className='deleted-icon' />
-                  )}
-                </h3>
-                <div className='group-icons'>
-                  <FaCog
-                    className='group-icon'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleOptions(group.PK);
-                    }}
-                  />
-                  {expandedGroups.includes(group.PK) ? (
-                    <PiCaretCircleUpFill
-                      className='group-icon'
-                      onClick={() => {
-                        setExpandedGroups(
-                          expandedGroups.filter((id) => id !== group.PK)
-                        );
-                      }}
-                    />
-                  ) : (
-                    <PiCaretCircleDownFill
-                      className='group-icon'
-                      onClick={() => {
-                        setExpandedGroups([...expandedGroups, group.PK]);
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Menu opcji */}
-              {showOptionsGroupId === group.PK && (
-                <div
-                  className='options-menu'
-                  ref={optionsMenuRef}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ul>
-                    {!group.isDeleted ? (
-                      <>
-                        <li
-                          onClick={() =>
-                            handleOptionSelect(group.PK, 'addIntegrator')
-                          }
-                        >
-                          Dodaj integrator
-                        </li>
-                        <li
-                          onClick={() =>
-                            handleOptionSelect(group.PK, 'removeIntegrator')
-                          }
-                        >
-                          Usuń integrator
-                        </li>
-                        <li
-                          onClick={() =>
-                            handleOptionSelect(group.PK, 'addUser')
-                          }
-                        >
-                          Dodaj użytkownika
-                        </li>
-                        <li
-                          onClick={() =>
-                            handleOptionSelect(group.PK, 'removeUser')
-                          }
-                        >
-                          Usuń użytkownika
-                        </li>
-                        <li
-                          onClick={() =>
-                            editGroup(group.PK, group.integratorGroupName, true)
-                          }
-                        >
-                          Usuń grupę
-                        </li>
-                      </>
-                    ) : (
-                      <li
-                        onClick={() =>
-                          editGroup(group.PK, group.integratorGroupName, false)
-                        }
-                      >
-                        Przywróć grupę
-                      </li>
+          filteredGroups.map((group) => {
+            const groupID = String(group.PK);
+            return (
+              <div
+                className={`group-card ${
+                  group.isDeleted ? 'group-deleted' : ''
+                }`}
+                key={group.PK}
+              >
+                <div className='group-header'>
+                  <h3>
+                    {group.integratorGroupName}
+                    {group.isDeleted && (
+                      <TiDeleteOutline className='deleted-icon' />
                     )}
-                  </ul>
+                  </h3>
+                  <div className='group-icons'>
+                    <FaCog
+                      className='group-icon'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleOptions(group.PK);
+                      }}
+                    />
+                    {expandedGroups.includes(group.PK) ? (
+                      <PiCaretCircleUpFill
+                        className='group-icon'
+                        onClick={() => {
+                          setExpandedGroups(
+                            expandedGroups.filter((id) => id !== group.PK)
+                          );
+                        }}
+                      />
+                    ) : (
+                      <PiCaretCircleDownFill
+                        className='group-icon'
+                        onClick={async () => {
+                          setExpandedGroups([...expandedGroups, group.PK]);
+                          if (!integrators[groupID]) {
+                            await fetchGroupDetails(group.PK);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {/* Szczegóły grupy */}
-              {expandedGroups.includes(group.PK) && (
-                <div className='group-details'>
-                  {/* Integratory */}
-                  <div className='integrators-section'>
-                    <h4>Integratory:</h4>
+                {/* Options Menu */}
+                {showOptionsGroupId === group.PK && (
+                  <div
+                    className='options-menu'
+                    ref={optionsMenuRef}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <ul>
-                      {integrators[group.PK]?.map((integrator) => (
+                      {!group.isDeleted ? (
+                        <>
+                          <li
+                            onClick={() =>
+                              handleOptionSelect(group.PK, 'addIntegrator')
+                            }
+                          >
+                            Dodaj integrator
+                          </li>
+                          <li
+                            onClick={() =>
+                              handleOptionSelect(group.PK, 'removeIntegrator')
+                            }
+                          >
+                            Usuń integrator
+                          </li>
+                          <li
+                            onClick={() =>
+                              handleOptionSelect(group.PK, 'addUser')
+                            }
+                          >
+                            Dodaj użytkownika
+                          </li>
+                          <li
+                            onClick={() =>
+                              handleOptionSelect(group.PK, 'removeUser')
+                            }
+                          >
+                            Usuń użytkownika
+                          </li>
+                          <li
+                            onClick={() =>
+                              editGroup(
+                                group.PK,
+                                group.integratorGroupName,
+                                true
+                              )
+                            }
+                          >
+                            Usuń grupę
+                          </li>
+                        </>
+                      ) : (
                         <li
-                          key={integrator.PK}
-                          className={integrator.isDeleted ? 'deleted-item' : ''}
+                          onClick={() =>
+                            editGroup(
+                              group.PK,
+                              group.integratorGroupName,
+                              false
+                            )
+                          }
                         >
-                          {integrator.serialNumber} - {integrator.location}
-                          {integrator.isDeleted && (
-                            <TiDeleteOutline className='deleted-icon' />
-                          )}
+                          Przywróć grupę
                         </li>
-                      ))}
+                      )}
                     </ul>
                   </div>
+                )}
 
-                  {/* Użytkownicy */}
-                  <div className='users-section'>
-                    <h4>Użytkownicy:</h4>
-                    {groupUsers[group.PK]?.length > 0 ? (
+                {/* Group Details */}
+                {expandedGroups.includes(group.PK) && (
+                  <div className='group-details'>
+                    {/* Integrators */}
+                    <div className='integrators-section'>
+                      <h4>Integratory:</h4>
                       <ul>
-                        {groupUsers[group.PK].map((userItem) => (
-                          <li key={userItem.PK}>{userItem.name}</li>
-                        ))}
+                        {integrators[groupID]?.length > 0 ? (
+                          integrators[groupID].map((integrator) => (
+                            <li
+                              key={integrator.PK}
+                              className={
+                                integrator.isDeleted ? 'deleted-item' : ''
+                              }
+                            >
+                              {integrator.serialNumber} - {integrator.location}
+                              {integrator.isDeleted && (
+                                <TiDeleteOutline className='deleted-icon' />
+                              )}
+                            </li>
+                          ))
+                        ) : (
+                          <p>Brak integratorów w tej grupie.</p>
+                        )}
                       </ul>
-                    ) : (
-                      <p>Brak użytkowników w tej grupie.</p>
-                    )}
+                    </div>
+
+                    {/* Users */}
+                    <div className='users-section'>
+                      <h4>Użytkownicy:</h4>
+                      {groupUsers[groupID]?.length > 0 ? (
+                        <ul>
+                          {groupUsers[groupID].map((userItem) => (
+                            <li key={userItem.PK}>{userItem.name}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>Brak użytkowników w tej grupie.</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
+                )}
+              </div>
+            );
+          })
+        ) : loading ? (
+          <div className='loader-container'>
+            <GridLoader color='var(--primary-500)' />
+          </div>
         ) : (
           <p>Brak grup do wyświetlenia.</p>
         )}
       </div>
 
-      {/* ToastContainer dla wiadomości */}
+      {/* ToastContainer for messages */}
       {successMessage && (
         <ToastContainer
           message={successMessage}
@@ -862,11 +891,11 @@ const ManageGroups = () => {
         />
       )}
 
-      {/* Modal do dodawania/usuwania integratorów i użytkowników */}
+      {/* Modal for adding/removing integrators and users */}
       {showModal && (
         <div className='modal-overlay'>
           <div className='modal-content'>
-            {/* Treść modala w zależności od akcji */}
+            {/* Modal content based on action */}
             {modalData.action === 'addIntegrator' && (
               <>
                 <h3>Dodaj Integrator do grupy</h3>
