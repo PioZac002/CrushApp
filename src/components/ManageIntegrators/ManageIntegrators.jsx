@@ -171,8 +171,8 @@ const ManageIntegrators = () => {
         {
           userID: isService ? selectedManagerID : user.userID,
           editData: {
-            isDeleted: isDeleted,
             PK: integratorID,
+            isDeleted: isDeleted,
           },
         },
         {
@@ -205,17 +205,17 @@ const ManageIntegrators = () => {
   // Handling status change
   const handleChangeStatus = async (integratorID, status) => {
     try {
+      const requestBody = {
+        userID: isService ? selectedManagerID : user.userID,
+        editData: {
+          PK: integratorID,
+          status: status,
+        },
+      };
+
       const response = await axios.put(
         endpoints.editIntegrator(user.userID),
-        {
-          userID: isService ? selectedManagerID : user.userID,
-          editData: {
-            PK: integratorID,
-            editData: {
-              status: status,
-            },
-          },
-        },
+        requestBody,
         {
           headers: {
             Authorization: `Bearer ${user.id_token}`,
@@ -550,16 +550,16 @@ const ManageIntegrators = () => {
                     className='status-dropdown'
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {[0, 1, 2, 3].map((status) => (
+                    {[0, 1, 2, 3].map((statusOption) => (
                       <button
-                        key={status}
+                        key={statusOption}
                         className='status-option'
                         onClick={() => {
-                          handleChangeStatus(integrator.PK, status);
+                          handleChangeStatus(integrator.PK, statusOption);
                           setStatusDropdownIntegratorId(null);
                         }}
                       >
-                        {status}
+                        {statusOption}
                       </button>
                     ))}
                   </div>

@@ -115,14 +115,16 @@ const ManageGroups = () => {
           userIDs.push(userID);
 
           groups.forEach((group) => {
-            const groupID = String(group.PK);
-            if (!groupUsersMap[groupID]) {
-              groupUsersMap[groupID] = [];
+            if (!group.isDeletedFromGroup) {
+              const groupID = String(group.PK);
+              if (!groupUsersMap[groupID]) {
+                groupUsersMap[groupID] = [];
+              }
+              groupUsersMap[groupID].push({
+                PK: userID,
+                name: '', // Zostanie uzupełnione później
+              });
             }
-            groupUsersMap[groupID].push({
-              PK: userID,
-              name: '', // Zostanie uzupełnione później
-            });
           });
         });
 
@@ -968,11 +970,19 @@ const ManageGroups = () => {
                     onChange={(e) => setSelectedUserID(e.target.value)}
                   >
                     <option value=''>-- Wybierz Użytkownika --</option>
-                    {availableUsers.map((userItem) => (
-                      <option key={userItem.PK} value={userItem.PK}>
-                        {userItem.name}
-                      </option>
-                    ))}
+                    {availableUsers
+                      .filter((userItem) => {
+                        // Exclude users already in the group
+                        const groupID = modalData.groupID;
+                        const groupUserIDs =
+                          groupUsers[groupID]?.map((u) => u.PK) || [];
+                        return !groupUserIDs.includes(userItem.PK);
+                      })
+                      .map((userItem) => (
+                        <option key={userItem.PK} value={userItem.PK}>
+                          {userItem.name}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <button

@@ -22,22 +22,22 @@ const Dashboard = () => {
   const [statusDropdownIntegratorId, setStatusDropdownIntegratorId] =
     useState(null);
 
-  // Added states for success and error messages
+  // Stan dla komunikatów sukcesu i błędu
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Ref for the currently open dropdown
+  // Ref dla aktualnie otwartego dropdownu
   const statusDropdownRef = useRef(null);
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
-  const isWorker = !isService && !isManager; // Determine if user is a worker
+  const isWorker = !isService && !isManager; // Określenie, czy użytkownik jest pracownikiem
 
   useEffect(() => {
     const fetchDataForManagersAndService = async () => {
       setLoading(true);
       try {
-        // Fetch Workers
+        // Pobierz pracowników
         const workersResponse = await axios.get(
           endpoints.getWorkers(user.userID),
           {
@@ -62,7 +62,7 @@ const Dashboard = () => {
           }
         }
 
-        // Fetch Integrators
+        // Pobierz integratory
         const managerID = isService ? selectedManagerID : '';
         const integratorsResponse = await axios.get(
           endpoints.getIntegrators(user.userID, managerID),
@@ -76,7 +76,7 @@ const Dashboard = () => {
           setIntegrators(integratorsResponse.data.integrators);
         }
 
-        // Fetch Integrator Groups
+        // Pobierz grupy integratorów
         const integratorGroupsResponse = await axios.get(
           endpoints.getIntegratorGroups(user.userID, managerID),
           {
@@ -99,7 +99,7 @@ const Dashboard = () => {
     const fetchDataForWorkers = async () => {
       setLoading(true);
       try {
-        // Fetch Integrators assigned to the worker
+        // Pobierz integratory przypisane do pracownika
         const response = await axios.get(
           endpoints.getIntegrators(user.userID),
           {
@@ -145,15 +145,14 @@ const Dashboard = () => {
     }
   };
 
+  // Zmodyfikowana funkcja handleChangeStatus
   const handleChangeStatus = async (integratorID, status) => {
     try {
       const requestBody = {
         userID: isService ? selectedManagerID : user.userID,
         editData: {
           PK: integratorID,
-          editData: {
-            status: status,
-          },
+          status: status,
         },
       };
 
@@ -189,7 +188,7 @@ const Dashboard = () => {
     }
   };
 
-  // Close the dropdown when clicking outside
+  // Zamknij dropdown po kliknięciu poza nim
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -265,7 +264,7 @@ const Dashboard = () => {
               <div className='integrator-location'>{integrator.location}</div>
             </div>
             <div className='integrator-actions'>
-              {/* Status change button */}
+              {/* Przycisk zmiany statusu */}
               <button
                 className='status-button'
                 onClick={(e) => {
@@ -275,7 +274,7 @@ const Dashboard = () => {
               >
                 <i className='bi bi-arrow-repeat'></i>
               </button>
-              {/* Status dropdown */}
+              {/* Dropdown statusu */}
               {statusDropdownIntegratorId === integrator.PK && (
                 <div
                   className='status-dropdown'
@@ -321,7 +320,7 @@ const Dashboard = () => {
     </div>
   );
 
-  // Worker View
+  // Widok dla pracownika
   if (isWorker) {
     return (
       <section className='dashboard-section'>
@@ -346,7 +345,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Display success and error messages */}
+        {/* Wyświetlanie komunikatów sukcesu i błędu */}
         {successMessage && (
           <ToastContainer
             message={successMessage}
@@ -365,7 +364,7 @@ const Dashboard = () => {
     );
   }
 
-  // Manager and Service View
+  // Widok dla managera i serwisanta
   return (
     <section className='dashboard-section'>
       {isService && (
@@ -499,7 +498,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Display success and error messages */}
+      {/* Wyświetlanie komunikatów sukcesu i błędu */}
       {successMessage && (
         <ToastContainer
           message={successMessage}
