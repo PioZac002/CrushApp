@@ -1,5 +1,6 @@
 // src/components/Login/Login.jsx
-import React, { useState, useContext } from 'react';
+
+import React, { useState, useContext, useEffect } from 'react';
 import './login.css';
 import Logo from '../../assets/images/logoKruszarka.png';
 import { AuthContext } from '../../context/AuthContext';
@@ -18,6 +19,11 @@ const Login = () => {
   const [isFirstLogin, setIsFirstLogin] = useState(false);
   const [newPassword, setNewPassword] = useState('');
 
+  // Nowe zmienne stanu dla liczby prób i czasu blokady
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
+
   const showErrorMessage = (message) => {
     setErrorMessage(message);
     setTimeout(() => {
@@ -25,8 +31,37 @@ const Login = () => {
     }, 5000);
   };
 
+  // Aktualizacja pozostałego czasu blokady
+  useEffect(() => {
+    let timer;
+    if (lockoutUntil) {
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        const distance = lockoutUntil - now;
+        if (distance <= 0) {
+          setLockoutUntil(null);
+          setFailedAttempts(0);
+          setTimeLeft(0);
+          clearInterval(timer);
+        } else {
+          setTimeLeft(Math.ceil(distance / 1000));
+        }
+      };
+      timer = setInterval(updateTimer, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [lockoutUntil]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    // Sprawdzenie, czy użytkownik jest zablokowany
+    if (lockoutUntil) {
+      showErrorMessage(
+        `Zbyt wiele nieudanych prób logowania. Spróbuj ponownie za ${timeLeft} sekund.`
+      );
+      return;
+    }
 
     try {
       const response = await axios.post(endpoints.login, {
@@ -34,15 +69,18 @@ const Login = () => {
         password,
       });
 
-      // Check for first login
+      // Resetowanie liczby nieudanych prób po udanym logowaniu
+      setFailedAttempts(0);
+
+      // Sprawdzenie, czy to pierwsze logowanie
       if (response.data.challengeName === 'NEW_PASSWORD_REQUIRED') {
         setIsFirstLogin(true);
         setSession(response.data.session);
       } else {
-        // Successful login
+        // Udane logowanie
         const { userID, id_token, access_token } = response.data;
 
-        // Set user state with email (username)
+        // Ustawienie stanu użytkownika z emailem (username)
         setUser({ userID, id_token, access_token, email: username });
 
         await fetchUserData(userID, id_token);
@@ -50,12 +88,38 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Błąd logowania:', error);
-      showErrorMessage('Nieprawidłowy email lub hasło.');
+
+      // Inkrementacja liczby nieudanych prób
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+
+      if (newFailedAttempts >= 3) {
+        // Ustawienie czasu blokady na 30 sekund od teraz
+        const lockoutTime = new Date().getTime() + 30000;
+        setLockoutUntil(lockoutTime);
+        showErrorMessage(
+          'Zbyt wiele nieudanych prób logowania. Zaloguj się ponownie za 30 sekund.'
+        );
+      } else {
+        showErrorMessage(
+          `Nieprawidłowy email lub hasło. Pozostało prób: ${
+            3 - newFailedAttempts
+          }`
+        );
+      }
     }
   };
 
   const handleFirstLogin = async (e) => {
     e.preventDefault();
+
+    // Sprawdzenie, czy użytkownik jest zablokowany
+    if (lockoutUntil) {
+      showErrorMessage(
+        `Zbyt wiele nieudanych prób logowania. Spróbuj ponownie za ${timeLeft} sekund.`
+      );
+      return;
+    }
 
     try {
       const response = await axios.post(endpoints.firstLogin(username), {
@@ -64,16 +128,35 @@ const Login = () => {
         session,
       });
 
+      // Resetowanie liczby nieudanych prób po udanym logowaniu
+      setFailedAttempts(0);
+
       const { userID, id_token, access_token } = response.data;
 
-      // Set user state with email (username)
+      // Ustawienie stanu użytkownika z emailem (username)
       setUser({ userID, id_token, access_token, email: username });
 
       await fetchUserData(userID, id_token);
       navigate('/');
     } catch (error) {
       console.error('Błąd podczas pierwszego logowania:', error);
-      showErrorMessage('Wystąpił błąd podczas pierwszego logowania.');
+
+      // Inkrementacja liczby nieudanych prób
+      const newFailedAttempts = failedAttempts + 1;
+      setFailedAttempts(newFailedAttempts);
+
+      if (newFailedAttempts >= 3) {
+        // Ustawienie czasu blokady na 30 sekund od teraz
+        const lockoutTime = new Date().getTime() + 30000;
+        setLockoutUntil(lockoutTime);
+        showErrorMessage(
+          'Zbyt wiele nieudanych prób logowania. Zaloguj się ponownie za 30 sekund.'
+        );
+      } else {
+        showErrorMessage(
+          `Nieprawidłowe hasło. Pozostało prób: ${3 - newFailedAttempts}`
+        );
+      }
     }
   };
 
@@ -117,6 +200,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                disabled={isFirstLogin}
               />
             </div>
           </div>
@@ -145,13 +229,23 @@ const Login = () => {
               />
             </div>
           </div>
-          <button
-            type='submit'
-            className='btn w-100 btn-success custom-button-login d-flex justify-content-between align-items-center'
-          >
-            {isFirstLogin ? 'Zmień hasło' : 'Zaloguj się'}
-            <i className='bi bi-arrow-right-short login-icon'></i>
-          </button>
+          {lockoutUntil ? (
+            <button
+              type='button'
+              className='btn w-100 btn-secondary custom-button-login d-flex justify-content-between align-items-center'
+              disabled
+            >
+              Zaloguj się za {timeLeft} sekund
+            </button>
+          ) : (
+            <button
+              type='submit'
+              className='btn w-100 btn-success custom-button-login d-flex justify-content-between align-items-center'
+            >
+              {isFirstLogin ? 'Zmień hasło' : 'Zaloguj się'}
+              <i className='bi bi-arrow-right-short login-icon'></i>
+            </button>
+          )}
         </form>
         {!isFirstLogin && (
           <div className='text-center mt-3'>

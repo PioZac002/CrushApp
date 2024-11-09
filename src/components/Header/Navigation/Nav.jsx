@@ -1,4 +1,3 @@
-import NavNotice from './NavNotice/NavNotice';
 import NavMessage from './NavMessage/NavMessage';
 import NavAvatar from './NavAvatar/NavAvatar';
 import './nav.css';

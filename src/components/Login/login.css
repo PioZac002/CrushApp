@@ -1,3 +1,5 @@
+/* src/components/Login/login.css */
+
 .login-container {
   background-color: #f9f9f9;
 }
@@ -40,13 +42,15 @@ button {
 button:hover {
   background-color: #4bdf6b;
 }
-.custom-button {
+
+.custom-button-login {
   background-color: blue;
   border: none;
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .login-icon {
   font-size: 1.5rem;
   transition: transform 0.3s ease;

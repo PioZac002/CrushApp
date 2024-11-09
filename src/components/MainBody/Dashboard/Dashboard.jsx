@@ -7,6 +7,7 @@ import axios from 'axios';
 import { endpoints } from '../../../api/api';
 import { GridLoader } from 'react-spinners';
 import ToastContainer from '../../ToastContainer/ToastContainer';
+import { FaSearch } from 'react-icons/fa';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -28,6 +29,8 @@ const Dashboard = () => {
 
   // Ref dla aktualnie otwartego dropdownu
   const statusDropdownRef = useRef(null);
+
+  const [searchTerm, setSearchTerm] = useState('');
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -99,17 +102,70 @@ const Dashboard = () => {
     const fetchDataForWorkers = async () => {
       setLoading(true);
       try {
-        // Pobierz integratory przypisane do pracownika
-        const response = await axios.get(
-          endpoints.getIntegrators(user.userID),
+        // Krok 1: Pobierz grupy integratorów, do których należy pracownik
+        const responseGroups = await axios.get(
+          endpoints.getIntegratorGroups(user.userID),
           {
             headers: {
               Authorization: user.id_token,
             },
           }
         );
-        if (response && response.data) {
-          setIntegrators(response.data.integrators);
+
+        if (responseGroups && responseGroups.data) {
+          const groups = responseGroups.data.integratorGroups || [];
+
+          // Krok 2: Wyciągnij ID grup
+          const groupIDs = groups.map((group) => group.PK).join(',');
+
+          if (groupIDs.length === 0) {
+            // Użytkownik nie należy do żadnych grup
+            setIntegrators([]);
+            setLoading(false);
+            return;
+          }
+
+          // Krok 3: Pobierz integratory z tych grup
+          const responseIntegrators = await axios.get(
+            `${endpoints.getGroupDetails(user.userID)}?groups=${groupIDs}`,
+            {
+              headers: {
+                Authorization: user.id_token,
+              },
+            }
+          );
+
+          if (responseIntegrators && responseIntegrators.data) {
+            const integratorsData = [];
+
+            // Przetwarzanie integratorów
+            if (responseIntegrators.data.integratorsInGroups) {
+              responseIntegrators.data.integratorsInGroups.forEach(
+                (groupData) => {
+                  Object.values(groupData).forEach((integratorList) => {
+                    integratorList.forEach((integrator) => {
+                      if (!integrator.isDeletedFromGroup) {
+                        integratorsData.push(integrator);
+                      }
+                    });
+                  });
+                }
+              );
+            }
+
+            // Usuwanie duplikatów na podstawie integrator.PK
+            const uniqueIntegrators = integratorsData.reduce(
+              (acc, integrator) => {
+                if (!acc.find((i) => i.PK === integrator.PK)) {
+                  acc.push(integrator);
+                }
+                return acc;
+              },
+              []
+            );
+
+            setIntegrators(uniqueIntegrators);
+          }
         }
       } catch (error) {
         console.error('Błąd podczas pobierania integratorów:', error);
@@ -145,7 +201,6 @@ const Dashboard = () => {
     }
   };
 
-  // Zmodyfikowana funkcja handleChangeStatus
   const handleChangeStatus = async (integratorID, status) => {
     try {
       const requestBody = {
@@ -157,7 +212,7 @@ const Dashboard = () => {
       };
 
       const response = await axios.put(
-        endpoints.editIntegrator(user.userID), // Używamy user.userID w URL
+        endpoints.editIntegrator(user.userID),
         requestBody,
         {
           headers: {
@@ -247,10 +302,16 @@ const Dashboard = () => {
     </div>
   );
 
-  const renderIntegratorList = () => (
-    <div className='dashboard-integrator-list'>
-      {(showMoreIntegrators ? integrators : integrators.slice(0, 5)).map(
-        (integrator) => (
+  const renderIntegratorList = () => {
+    const filteredIntegrators = integrators.filter((integrator) =>
+      `${integrator.serialNumber} ${integrator.location}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+
+    return (
+      <div className='dashboard-integrator-list'>
+        {filteredIntegrators.map((integrator) => (
           <div
             key={integrator.PK}
             className={`dashboard-integrator-item ${getStatusColor(
@@ -298,10 +359,13 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-        )
-      )}
-    </div>
-  );
+        ))}
+        {filteredIntegrators.length === 0 && (
+          <p>Brak integratorów do wyświetlenia.</p>
+        )}
+      </div>
+    );
+  };
 
   const renderIntegratorGroups = () => (
     <div className='dashboard-group-list'>
@@ -329,18 +393,25 @@ const Dashboard = () => {
             <i className='bi bi-tools container-icon'></i>
             <h5 className='container-title'>Lista Integratorów</h5>
           </div>
+
+          {/* Pasek wyszukiwania */}
+          <div className='search-bar'>
+            <input
+              type='text'
+              placeholder='Szukaj integratora...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <FaSearch className='search-icon' />
+          </div>
+
           <div className='container-content'>
             {loading ? (
               <div className='loader-container'>
                 <GridLoader color='var(--primary-500)' />
               </div>
             ) : (
-              <>
-                {renderIntegratorList()}
-                {integrators.length === 0 && (
-                  <p>Brak integratorów do wyświetlenia.</p>
-                )}
-              </>
+              <>{renderIntegratorList()}</>
             )}
           </div>
         </div>
