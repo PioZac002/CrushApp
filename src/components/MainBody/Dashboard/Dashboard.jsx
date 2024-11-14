@@ -254,11 +254,20 @@ const Dashboard = () => {
       }
     };
 
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [statusDropdownIntegratorId]);
+  // Dodaj blok kodu sprawdzający stan ładowania tutaj
+  if (loading) {
+    return (
+        <div className='loader-container' data-testid='loading-spinner'>
+          <GridLoader color='var(--primary-500)' />
+        </div>
+    );
+  }
 
   const renderWorkersList = () => (
     <div className='dashboard-worker-list'>

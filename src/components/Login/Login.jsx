@@ -195,6 +195,7 @@ const Login = () => {
               <input
                 type='email'
                 id='username'
+                name="email"
                 className='form-control'
                 placeholder='Wprowadź adres email'
                 value={username}
@@ -215,6 +216,7 @@ const Login = () => {
               <input
                 type='password'
                 id='password'
+                name="password"
                 className='form-control'
                 placeholder={
                   isFirstLogin ? 'Wprowadź nowe hasło' : 'Wprowadź hasło'

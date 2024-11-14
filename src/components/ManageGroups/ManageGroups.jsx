@@ -713,6 +713,7 @@ const ManageGroups = () => {
             const groupID = String(group.PK);
             return (
               <div
+                  data-testid={`group-card-${group.PK}`}
                 className={`group-card ${
                   group.isDeleted ? 'group-deleted' : ''
                 }`}
@@ -726,32 +727,37 @@ const ManageGroups = () => {
                     )}
                   </h3>
                   <div className='group-icons'>
+
                     <FaCog
-                      className='group-icon'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleOptions(group.PK);
-                      }}
+                        data-testid={`group-options-button-${group.PK}`}
+                        className='group-icon'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOptions(group.PK);
+                        }}
                     />
+
                     {expandedGroups.includes(group.PK) ? (
-                      <PiCaretCircleUpFill
-                        className='group-icon'
-                        onClick={() => {
-                          setExpandedGroups(
-                            expandedGroups.filter((id) => id !== group.PK)
-                          );
-                        }}
-                      />
+                        <PiCaretCircleUpFill
+                            data-testid={`group-expand-button-${group.PK}`}
+                            className='group-icon'
+                            onClick={() => {
+                              setExpandedGroups(
+                                  expandedGroups.filter((id) => id !== group.PK)
+                              );
+                            }}
+                        />
                     ) : (
-                      <PiCaretCircleDownFill
-                        className='group-icon'
-                        onClick={async () => {
-                          setExpandedGroups([...expandedGroups, group.PK]);
-                          if (!integrators[groupID]) {
-                            await fetchGroupDetails(group.PK);
-                          }
-                        }}
-                      />
+                        <PiCaretCircleDownFill
+                            data-testid={`group-expand-button-${group.PK}`}
+                            className='group-icon'
+                            onClick={async () => {
+                              setExpandedGroups([...expandedGroups, group.PK]);
+                              if (!integrators[group.PK]) {
+                                await fetchGroupDetails(group.PK);
+                              }
+                            }}
+                        />
                     )}
                   </div>
                 </div>
@@ -902,8 +908,9 @@ const ManageGroups = () => {
               <>
                 <h3>Dodaj Integrator do grupy</h3>
                 <div className='modal-field'>
-                  <label>Wybierz Integrator:</label>
+                  <label htmlFor="select-integrator">Wybierz Integrator:</label>
                   <select
+                      id="select-integrator"
                     value={selectedIntegratorID}
                     onChange={(e) => setSelectedIntegratorID(e.target.value)}
                   >
@@ -933,8 +940,9 @@ const ManageGroups = () => {
               <>
                 <h3>Usuń Integrator z grupy</h3>
                 <div className='modal-field'>
-                  <label>Wybierz Integrator:</label>
+                  <label htmlFor="remove-select-integrator">Wybierz Integrator:</label>
                   <select
+                      id="remove-select-integrator"
                     value={selectedIntegratorID}
                     onChange={(e) => setSelectedIntegratorID(e.target.value)}
                   >
@@ -964,8 +972,9 @@ const ManageGroups = () => {
               <>
                 <h3>Dodaj Użytkownika do grupy</h3>
                 <div className='modal-field'>
-                  <label>Wybierz Użytkownika:</label>
+                  <label htmlFor="select-user">Wybierz Użytkownika:</label>
                   <select
+                      id="select-user"
                     value={selectedUserID}
                     onChange={(e) => setSelectedUserID(e.target.value)}
                   >
@@ -1000,8 +1009,9 @@ const ManageGroups = () => {
               <>
                 <h3>Usuń Użytkownika z grupy</h3>
                 <div className='modal-field'>
-                  <label>Wybierz Użytkownika:</label>
+                  <label htmlFor="remove-select-user">Wybierz Użytkownika:</label>
                   <select
+                      id="remove-select-user"
                     value={selectedUserID}
                     onChange={(e) => setSelectedUserID(e.target.value)}
                   >
