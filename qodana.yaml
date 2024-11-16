@@ -67,7 +67,7 @@ include:
   - name: CssInvalidPseudoSelector
   - name: CssInvalidHtmlTagReference
   - name: CssInvalidImport
-  - name: CssInvalidCharsetRule
+  - name: CssInvalidCharsetRu009=le
   - name: CssInvalidAtRule
   - name: CssUnknownUnit
   - name: CssUnresolvedClassInComposesRule

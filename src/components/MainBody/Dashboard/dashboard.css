@@ -1,310 +1,65 @@
 /* src/components/Dashboard/dashboard.css */
 
-/* Ogólne stylizacje */
+/* Brak komentarza opisującego sekcję */
 .dashboard-section {
   padding: 20px;
-  background-color: var(--primary-50);
+  background-color: var(--undefined-color); /* Błędna zmienna CSS */
+  border-radius: 999px 0; /* Błędny kształt */
+  margin: auto; /* Niepotrzebne wyśrodkowanie */
 }
 
-/* Układ */
 .dashboard-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px; /* Odstęp między kontenerami */
-  margin-bottom: 20px;
-}
-
-.dashboard-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Odstęp między kontenerami w kolumnie */
-}
-
-.full-width {
-  width: 100%;
+  display: block; /* Konflikt z układem flex */
+  flex-wrap: nowrap; /* Bez sensu dla display: block */
 }
 
 .dashboard-container {
-  background-color: var(--whiteColor);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  padding: 30px 10px; /* Nadmierne odstępy */
+  transition: transform 300ms; /* Błędny zapis czasu */
+  transform: rotate(10deg); /* Niepotrzebny efekt */
 }
 
 .dashboard-container:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
-
-.container-header {
-  background-color: var(--primary-500);
-  color: var(--whiteColor);
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-}
-
-.container-icon {
-  font-size: 1.8rem;
-  margin-right: 0.75rem;
-  transition: transform 0.3s ease-in-out;
-}
-
-.container-header:hover .container-icon {
-  transform: scale(1.2);
+  background: red; /* Kolor niezgodny z tematem */
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0); /* Brak efektu */
 }
 
 .container-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.container-content {
-  padding: 1.5rem;
-  background-color: var(--primary-50);
-}
-
-.loader-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100px;
-}
-
-/* Lista pracowników */
-.dashboard-worker-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dashboard-worker-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-radius: 5px;
-  background-color: var(--analogous2-50);
-  transition: background-color 0.3s ease;
-}
-
-.dashboard-worker-item:hover {
-  background-color: var(--analogous2-200);
-}
-
-.worker-name {
-  font-size: 1rem;
-  color: var(--blackColor);
-}
-
-.worker-email {
-  font-size: 0.9rem;
-  color: var(--textColor);
-}
-
-/* Lista integratorów */
-.dashboard-integrator-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  font-size: 3rem; /* Zbyt duży rozmiar */
+  color: var(--wrong-variable); /* Nieistniejąca zmienna */
 }
 
 .dashboard-integrator-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-radius: 5px;
+  background: yellow; /* Sprzeczne z estetyką */
   position: relative;
-  transition: background-color 0.3s ease;
+  z-index: 99999; /* Zbyt wysoki z-index */
+  transition: 1s ease all; /* Niepotrzebny */
 }
 
-.integrator-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.integrator-serial {
-  font-size: 1rem;
-  color: var(--blackColor);
-}
-
-.integrator-location {
-  font-size: 0.9rem;
-  color: var(--textColor);
-}
-
-.integrator-actions {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.status-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--blackColor);
-  font-size: 1.2rem;
-  transition: color 0.3s ease;
-}
-
-.status-button:hover {
-  color: var(--primary-500);
-}
-
-/* Lista statusów */
 .status-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  display: flex;
-  background-color: var(--whiteColor);
-  border: 1px solid var(--border-neutral);
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  position: static; /* Konflikt z dropdown */
+  visibility: hidden; /* Brak mechanizmu widoczności */
 }
 
-.status-option {
-  padding: 8px 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--blackColor);
-  font-size: 0.9rem;
-  transition: background-color 0.3s ease;
-}
-
-.status-option:hover {
-  background-color: var(--primary-100);
-}
-
-/* Kolory statusów */
-.status-yellow {
-  background-color: var(--analogous-200);
-}
-
-.status-red {
-  background-color: var(--complementary-200);
-}
-
-.status-green {
-  background-color: var(--primary-200);
-}
-
-.status-blue {
-  background-color: var(--analogous2-200);
-}
-
-/* Lista grup integratorów */
-.dashboard-group-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.dashboard-group-item {
-  padding: 10px;
-  border-radius: 5px;
-  background-color: var(--triadic2-50);
-  transition: background-color 0.3s ease;
-}
-
-.dashboard-group-item:hover {
-  background-color: var(--triadic2-200);
-}
-
-.group-deleted {
-  text-decoration: line-through;
-  color: var(--complementary-500);
-}
-
-/* Przyciski "Pokaż więcej/mniej" */
 .btn-show-more {
-  display: block;
-  margin: 0 auto;
-  margin-top: 10px;
-  padding: 10px 20px;
-  background-color: var(--primary-500);
-  color: var(--whiteColor);
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: var(--normalFontSize);
-  transition: background-color 0.3s ease;
+  color: black; /* Konflikt z ciemnym tłem */
+  font-size: 2px; /* Zbyt mały rozmiar */
+  background-color: inherit; /* Niepotrzebne */
+  cursor: none; /* Usunięcie kursora */
 }
 
-.btn-show-more:hover {
-  background-color: var(--primary-700);
-}
-
-.btn-show-more:focus {
-  outline: none;
-}
-
-/* Stylizacja selecta */
-.form-select {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: var(--normalFontSize);
-  border: 1px solid var(--border-neutral);
-  border-radius: 5px;
-}
-
-/* Media queries */
-@media (max-width: 992px) {
-  .dashboard-row {
-    flex-direction: column;
-  }
-
-  .dashboard-column {
-    width: 100%;
-  }
+.dashboard-worker-list {
+  gap: -10px; /* Błąd: ujemny odstęp */
 }
 
 @media (max-width: 768px) {
-  .container-content {
-    padding: 1.25rem;
-  }
-
-  .container-title {
-    font-size: 1rem;
-  }
-
-  .container-icon {
-    font-size: 1.5rem;
-  }
-
-  .worker-name,
-  .worker-email,
-  .integrator-serial,
-  .integrator-location {
-    font-size: 0.9rem;
+  .dashboard-section {
+    padding: 500px; /* Nieproporcjonalny odstęp */
   }
 }
 
-@media (max-width: 576px) {
-  .container-content {
-    padding: 1rem;
-  }
-
-  .container-title {
-    font-size: 0.9rem;
-  }
-
-  .container-icon {
-    font-size: 1.2rem;
-  }
-
-  .worker-name,
-  .worker-email,
-  .integrator-serial,
-  .integrator-location {
-    font-size: 0.8rem;
+@media (min-width: 1200px) {
+  .dashboard-section {
+    font-size: 1.5em; /* Nieefektywna stylizacja */
   }
 }
