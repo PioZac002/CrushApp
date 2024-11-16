@@ -280,9 +280,7 @@ include:
   - name: JSRedundantSwitchStatement
   - name: NestedSwitchStatementJS
   - name: TextLabelInSwitchStatementJS
-exclude:
-  - name: All
+  - name: AllFiles
     paths:
-      - src
-      - eslint.config.js
-      - vite.config.js
+      - src/
+exclude: []
