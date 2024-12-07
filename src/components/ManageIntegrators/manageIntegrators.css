@@ -77,37 +77,66 @@
   color: var(--textColor);
 }
 
-/* Add Integrator Form */
-.add-integrator-form {
+/* Add Integrator Modal */
+.modal-overlay-integrator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content-integrator {
+  background-color: var(--whiteColor);
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: relative;
+  border: 2px solid var(--primary-500);
+}
+.options-menu-integrator {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background: var(--whiteColor);
+  border: 1px solid var(--border-neutral);
+  border-radius: 4px;
+  z-index: 2100;
+  width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.modal-content-integrator h3 {
   margin-bottom: 20px;
 }
 
-.add-integrator-form form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+.form-group-integrator {
+  margin-bottom: 15px;
+  text-align: left;
 }
 
-.form-group {
-  flex: 1 1 300px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
+.form-group-integrator label {
   margin-bottom: 8px;
   font-weight: 600;
   color: var(--blackColor);
 }
 
-.form-group input {
+.form-group-integrator input {
+  width: 100%;
   padding: 10px;
   border: 1px solid var(--border-neutral);
   border-radius: 5px;
   font-size: var(--normalFontSize);
 }
 
-.btn-submit {
+.btn-submit-integrator {
   padding: 12px 20px;
   background-color: var(--primary-500);
   color: var(--whiteColor);
@@ -116,11 +145,27 @@
   cursor: pointer;
   font-size: var(--normalFontSize);
   transition: background-color 0.3s ease;
-  margin-top: 25px;
+  margin-top: 15px;
 }
 
-.btn-submit:hover {
+.btn-submit-integrator:hover {
   background-color: var(--primary-700);
+}
+
+.modal-close-button-integrator {
+  padding: 12px 20px;
+  background-color: var(--complementary-500);
+  color: var(--whiteColor);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: var(--normalFontSize);
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.modal-close-button-integrator:hover {
+  background-color: var(--complementary-700);
 }
 
 /* Integrators List */
@@ -189,12 +234,12 @@
 /* Options Menu */
 .options-menu-integrator {
   position: absolute;
-  top: 40px;
+  top: 20px;
   right: 10px;
   background: var(--whiteColor);
   border: 1px solid var(--border-neutral);
   border-radius: 4px;
-  z-index: 1000;
+  z-index: 1500;
   width: 150px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -215,33 +260,28 @@
   background-color: var(--primary-100);
 }
 
-/* Status Dropdown */
-.status-dropdown {
-  position: absolute;
-  top: 40px;
-  right: 10px;
-  background: var(--whiteColor);
-  border: 1px solid var(--border-neutral);
-  border-radius: 4px;
-  z-index: 1001;
-  width: 120px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 5px;
+/* Status Modal */
+.status-options-integrator {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
-.status-option {
-  padding: 10px;
-  background: none;
+.status-option-modal-integrator {
+  padding: 10px 20px;
+  background-color: var(--primary-500);
+  color: var(--whiteColor);
   border: none;
-  width: 100%;
-  text-align: left;
+  border-radius: 5px;
   cursor: pointer;
   font-size: var(--normalFontSize);
   transition: background-color 0.3s ease;
 }
 
-.status-option:hover {
-  background-color: var(--primary-100);
+.status-option-modal-integrator:hover {
+  background-color: var(--primary-700);
 }
 
 /* Status Colors */
@@ -287,9 +327,8 @@
     flex: 1 1 100%;
   }
 
-  .options-menu-integrator,
-  .status-dropdown {
+  .options-menu-integrator {
     right: auto;
-    left: 10px;
+    left: 200px;
   }
 }

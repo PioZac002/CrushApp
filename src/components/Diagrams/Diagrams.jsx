@@ -23,7 +23,7 @@ import html2canvas from 'html2canvas';
 import { GridLoader } from 'react-spinners';
 
 // Import for icons
-import { FaTable, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaTable, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 
 const Diagrams = () => {
   const { user } = useContext(AuthContext);
@@ -50,10 +50,12 @@ const Diagrams = () => {
 
   const [integratorMap, setIntegratorMap] = useState({});
   const [showTable, setShowTable] = useState(false);
-  const [showCreateReport, setShowCreateReport] = useState(false);
-  const [showAllReports, setShowAllReports] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState(''); // Nowa zmienna stanu dla wyszukiwania
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showAllReports, setShowAllReports] = useState(false);
 
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
@@ -63,8 +65,11 @@ const Diagrams = () => {
     const fetchReports = async () => {
       setLoading(true);
       try {
-        const requesterID = isService && selectedManagerID ? selectedManagerID : user.userID;
-        const response = await axios.get(endpoints.getAllReports(requesterID), {
+        const creatorID = user.userID;
+        const managerID = isService ? selectedManagerID : '';
+        const requestUrl = endpoints.getAllReports(creatorID, managerID);
+
+        const response = await axios.get(requestUrl, {
           headers: {
             Authorization: user.id_token,
           },
@@ -87,7 +92,6 @@ const Diagrams = () => {
         setLoading(false);
       }
     };
-
 
     fetchReports();
   }, [user, isService, selectedManagerID]);
@@ -189,9 +193,9 @@ const Diagrams = () => {
         }),
       };
 
-      const requesterID = user.userID;
+      const creatorID = user.userID;
       const managerID = isService ? selectedManagerID : '';
-      const endpoint = endpoints.createReport(requesterID, managerID);
+      const endpoint = endpoints.createReport(creatorID, managerID);
 
       const response = await axios.post(endpoint, requestBody, {
         headers: {
@@ -214,7 +218,7 @@ const Diagrams = () => {
             isGroup: false,
           },
         ]);
-        setShowCreateReport(false);
+        setShowCreateReportModal(false);
         alert('Raport został pomyślnie utworzony.');
       }
     } catch (error) {
@@ -223,20 +227,18 @@ const Diagrams = () => {
     }
   };
 
-
   const fetchReportData = async (reportID) => {
     setLoading(true);
     try {
-      const requesterID =
-          isService && selectedManagerID ? selectedManagerID : user.userID;
-      const response = await axios.get(
-          endpoints.getReportData(requesterID, reportID),
-          {
-            headers: {
-              Authorization: user.id_token,
-            },
-          }
-      );
+      const creatorID = user.userID;
+      const managerID = isService ? selectedManagerID : '';
+      const endpoint = endpoints.getReportData(creatorID, reportID, managerID);
+
+      const response = await axios.get(endpoint, {
+        headers: {
+          Authorization: user.id_token,
+        },
+      });
       if (response && response.data) {
         // Process the response data according to the API format
         // Response is an array of arrays: [ [ "integrator#ID", [ dataPoints ] ], ... ]
@@ -249,6 +251,7 @@ const Diagrams = () => {
           };
         });
         setReportData(processedData);
+        setShowReportModal(true);
       }
     } catch (error) {
       console.error('Błąd podczas pobierania danych raportu:', error);
@@ -306,12 +309,19 @@ const Diagrams = () => {
     setShowTable(!showTable);
   };
 
-  const toggleCreateReport = () => {
-    setShowCreateReport(!showCreateReport);
+  const toggleCreateReportModal = () => {
+    setShowCreateReportModal(!showCreateReportModal);
   };
 
   const toggleShowAllReports = () => {
     setShowAllReports(!showAllReports);
+  };
+
+  const closeReportModal = () => {
+    setShowReportModal(false);
+    setSelectedReportID(null);
+    setReportData([]);
+    setShowTable(false);
   };
 
   // Filtracja raportów na podstawie nazwy
@@ -325,8 +335,8 @@ const Diagrams = () => {
         <div className='diagrams-header'>
           <div className='diagrams-title'>
             <h2>Wykresy i raporty</h2>
-            <button onClick={toggleCreateReport}>
-              {showCreateReport ? 'Anuluj' : 'Stwórz nowy raport'}
+            <button onClick={toggleCreateReportModal}>
+              {showCreateReportModal ? 'Anuluj' : 'Stwórz nowy raport'}
             </button>
           </div>
 
@@ -342,126 +352,132 @@ const Diagrams = () => {
           </div>
         </div>
 
-        {/* Formularz tworzenia nowego raportu */}
-        {showCreateReport && (
-            <div className='diagrams-create-report'>
-              <h3>Stwórz nowy raport</h3>
-              {isService && (
-                  <div className='diagrams-form-group'>
-                    <label>Wybierz Managera:</label>
-                    <select
-                        value={selectedManagerID}
-                        onChange={(e) => setSelectedManagerID(e.target.value)}
-                    >
-                      <option value=''>-- Wybierz Managera --</option>
-                      {managers.map((manager) => {
-                        const givenName = manager.cognitoAttributes.find(
-                            (attr) => attr.Name === 'given_name'
-                        )?.Value;
-                        const familyName = manager.cognitoAttributes.find(
-                            (attr) => attr.Name === 'family_name'
-                        )?.Value;
-                        return (
-                            <option key={manager.PK} value={manager.PK}>
-                              {`${givenName} ${familyName}`}
-                            </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-              )}
-              <div className='diagrams-form-group'>
-                <label  htmlFor='reportName'>Nazwa Raportu:</label>
-                <input
-                    id='reportName'
-                    type='text'
-                    value={reportName}
-                    onChange={(e) => setReportName(e.target.value)}
+        {/* Modal tworzenia nowego raportu */}
+        {showCreateReportModal && (
+            <div className='modal-overlay-diagrams'>
+              <div className='modal-content-diagrams'>
+                <FaTimes
+                    className='modal-close-icon'
+                    onClick={toggleCreateReportModal}
                 />
-              </div>
-              <h4>Wybierz dane:</h4>
-              {dataEntries.map((entry, index) => (
-                  <div key={index} className='diagrams-data-entry'>
+                <h3>Stwórz nowy raport</h3>
+                {isService && (
                     <div className='diagrams-form-group'>
-                      <label>Wybierz Integrator lub Grupę:</label>
+                      <label>Wybierz Managera:</label>
                       <select
-                          value={entry.PK}
-                          onChange={(e) =>
-                              handleDataEntryChange(index, 'PK', e.target.value)
-                          }
+                          value={selectedManagerID}
+                          onChange={(e) => setSelectedManagerID(e.target.value)}
                       >
-                        <option value=''>-- Wybierz --</option>
-                        <optgroup label='Integratory'>
-                          {availableIntegrators.map((integrator) => (
-                              <option key={integrator.PK} value={integrator.PK}>
-                                {integrator.serialNumber} - {integrator.location}
+                        <option value=''>-- Wybierz Managera --</option>
+                        {managers.map((manager) => {
+                          const givenName = manager.cognitoAttributes.find(
+                              (attr) => attr.Name === 'given_name'
+                          )?.Value;
+                          const familyName = manager.cognitoAttributes.find(
+                              (attr) => attr.Name === 'family_name'
+                          )?.Value;
+                          return (
+                              <option key={manager.PK} value={manager.PK}>
+                                {`${givenName} ${familyName}`}
                               </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label='Grupy'>
-                          {availableGroups.map((group) => (
-                              <option key={group.PK} value={group.PK}>
-                                {group.integratorGroupName}
-                              </option>
-                          ))}
-                        </optgroup>
+                          );
+                        })}
                       </select>
-                      <label className='diagrams-checkbox'>
-                        <input
-                            type='checkbox'
-                            checked={entry.isGroup}
+                    </div>
+                )}
+                <div className='diagrams-form-group'>
+                  <label htmlFor='reportName'>Nazwa Raportu:</label>
+                  <input
+                      id='reportName'
+                      type='text'
+                      value={reportName}
+                      onChange={(e) => setReportName(e.target.value)}
+                  />
+                </div>
+                <h4>Wybierz dane:</h4>
+                {dataEntries.map((entry, index) => (
+                    <div key={index} className='diagrams-data-entry'>
+                      <div className='diagrams-form-group'>
+                        <label>Wybierz Integrator lub Grupę:</label>
+                        <select
+                            value={entry.PK}
                             onChange={(e) =>
-                                handleDataEntryChange(index, 'isGroup', e.target.checked)
+                                handleDataEntryChange(index, 'PK', e.target.value)
                             }
+                        >
+                          <option value=''>-- Wybierz --</option>
+                          <optgroup label='Integratory'>
+                            {availableIntegrators.map((integrator) => (
+                                <option key={integrator.PK} value={integrator.PK}>
+                                  {integrator.serialNumber} - {integrator.location}
+                                </option>
+                            ))}
+                          </optgroup>
+                          <optgroup label='Grupy'>
+                            {availableGroups.map((group) => (
+                                <option key={group.PK} value={group.PK}>
+                                  {group.integratorGroupName}
+                                </option>
+                            ))}
+                          </optgroup>
+                        </select>
+                        <label className='diagrams-checkbox'>
+                          <input
+                              type='checkbox'
+                              checked={entry.isGroup}
+                              onChange={(e) =>
+                                  handleDataEntryChange(index, 'isGroup', e.target.checked)
+                              }
+                          />
+                          To jest Grupa
+                        </label>
+                      </div>
+                      <div className='diagrams-form-group'>
+                        <label>Data Początkowa:</label>
+                        <DatePicker
+                            selected={entry.RangeStart}
+                            onChange={(date) =>
+                                handleDataEntryChange(index, 'RangeStart', date)
+                            }
+                            selectsStart
+                            startDate={entry.RangeStart}
+                            endDate={entry.RangeEnd}
+                            dateFormat='yyyy-MM-dd'
                         />
-                        To jest Grupa
-                      </label>
+                      </div>
+                      <div className='diagrams-form-group'>
+                        <label>Data Końcowa:</label>
+                        <DatePicker
+                            selected={entry.RangeEnd}
+                            onChange={(date) =>
+                                handleDataEntryChange(index, 'RangeEnd', date)
+                            }
+                            selectsEnd
+                            startDate={entry.RangeStart}
+                            endDate={entry.RangeEnd}
+                            minDate={entry.RangeStart}
+                            dateFormat='yyyy-MM-dd'
+                        />
+                      </div>
+                      <button
+                          className='diagrams-remove-entry'
+                          onClick={() => removeDataEntry(index)}
+                      >
+                        Usuń
+                      </button>
                     </div>
-                    <div className='diagrams-form-group'>
-                      <label>Data Początkowa:</label>
-                      <DatePicker
-                          selected={entry.RangeStart}
-                          onChange={(date) =>
-                              handleDataEntryChange(index, 'RangeStart', date)
-                          }
-                          selectsStart
-                          startDate={entry.RangeStart}
-                          endDate={entry.RangeEnd}
-                          dateFormat='yyyy-MM-dd'
-                      />
-                    </div>
-                    <div className='diagrams-form-group'>
-                      <label>Data Końcowa:</label>
-                      <DatePicker
-                          selected={entry.RangeEnd}
-                          onChange={(date) =>
-                              handleDataEntryChange(index, 'RangeEnd', date)
-                          }
-                          selectsEnd
-                          startDate={entry.RangeStart}
-                          endDate={entry.RangeEnd}
-                          minDate={entry.RangeStart}
-                          dateFormat='yyyy-MM-dd'
-                      />
-                    </div>
-                    <button
-                        className='diagrams-remove-entry'
-                        onClick={() => removeDataEntry(index)}
-                    >
-                      Usuń
-                    </button>
-                  </div>
-              ))}
-              <button className='diagrams-add-entry' onClick={addDataEntry}>
-                Dodaj Kolejny
-              </button>
-              <button
-                  className='diagrams-create-button'
-                  onClick={handleCreateReport}
-                  disabled={!reportName || (isService && !selectedManagerID)}
-              >
-                Stwórz Raport
-              </button>
+                ))}
+                <button className='diagrams-add-entry' onClick={addDataEntry}>
+                  Dodaj Kolejny
+                </button>
+                <button
+                    className='diagrams-create-button'
+                    onClick={handleCreateReport}
+                    disabled={!reportName || (isService && !selectedManagerID)}
+                >
+                  Stwórz Raport
+                </button>
+              </div>
             </div>
         )}
 
@@ -482,9 +498,11 @@ const Diagrams = () => {
                       ))}
                 </ul>
                 {filteredReports.length > 5 && (
-                    <button onClick={toggleShowAllReports}>
-                      {showAllReports ? 'Pokaż mniej' : 'Pokaż więcej'}
-                    </button>
+                    <div className='diagrams-show-more'>
+                      <button onClick={toggleShowAllReports}>
+                        {showAllReports ? 'Pokaż mniej' : 'Pokaż więcej'}
+                      </button>
+                    </div>
                 )}
               </>
           ) : (
@@ -492,99 +510,109 @@ const Diagrams = () => {
           )}
         </div>
 
-        {/* Wyświetlanie danych wybranego raportu */}
-        {selectedReportID && (
-            <div className='diagrams-report-details'>
-              <div className='diagrams-report-header'>
-                <h3>
-                  Dane Raportu:{' '}
-                  {reports.find((r) => r.reportID === selectedReportID)?.reportName}
-                </h3>
-                <FaTable className='diagrams-table-icon' onClick={toggleTable} />
-              </div>
-              {loading ? (
-                  <div className='diagrams-loader-container'>
-                    <GridLoader color='#1cb726' />
+        {/* Modal wyświetlania raportu */}
+        {showReportModal && selectedReportID && (
+            <div className='modal-overlay-diagrams'>
+              <div className='modal-content-diagrams'>
+                <FaTimes className='modal-close-icon' onClick={closeReportModal} />
+                <div className='diagrams-report-details'>
+                  <div className='diagrams-report-header'>
+                    <h3>
+                      Dane Raportu:{' '}
+                      {
+                        reports.find((r) => r.reportID === selectedReportID)
+                            ?.reportName
+                      }
+                    </h3>
+                    <FaTable className='diagrams-table-icon' onClick={toggleTable} />
                   </div>
-              ) : (
-                  <div id='report-content'>
-                    {/* Wyświetlanie tabel efektywności */}
-                    {showTable && (
-                        <div className='diagrams-efficiency-table'>
-                          {reportData.map((dataEntry, index) => (
-                              <div key={index} className='diagrams-table-container'>
-                                <h4>
-                                  Integrator:{' '}
-                                  {integratorMap[dataEntry.integratorID] ||
-                                      dataEntry.integratorID}
-                                </h4>
-                                <table>
-                                  <thead>
-                                  <tr>
-                                    <th>Data i Czas</th>
-                                    <th>Efektywność</th>
-                                  </tr>
-                                  </thead>
-                                  <tbody>
-                                  {dataEntry.dataPoints.map((point, idx) => (
-                                      <tr key={idx}>
-                                        <td>{new Date(point.SK).toLocaleString()}</td>
-                                        <td>{point.totalCrushed}</td>
+                  {loading ? (
+                      <div className='diagrams-loader-container'>
+                        <GridLoader color='#1cb726' />
+                      </div>
+                  ) : (
+                      <div id='report-content'>
+                        {/* Wyświetlanie tabel efektywności */}
+                        {showTable && (
+                            <div className='diagrams-efficiency-table'>
+                              {reportData.map((dataEntry, index) => (
+                                  <div key={index} className='diagrams-table-container'>
+                                    <h4>
+                                      Integrator:{' '}
+                                      {integratorMap[dataEntry.integratorID] ||
+                                          dataEntry.integratorID}
+                                    </h4>
+                                    <table>
+                                      <thead>
+                                      <tr>
+                                        <th>Data i Czas</th>
+                                        <th>Efektywność</th>
                                       </tr>
-                                  ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                          ))}
-                        </div>
-                    )}
+                                      </thead>
+                                      <tbody>
+                                      {dataEntry.dataPoints.map((point, idx) => (
+                                          <tr key={idx}>
+                                            <td>
+                                              {new Date(point.SK).toLocaleString('pl-PL')}
+                                            </td>
+                                            <td>{point.totalCrushed}</td>
+                                          </tr>
+                                      ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                              ))}
+                            </div>
+                        )}
 
-                    {/* Wyświetlanie wykresów */}
-                    {reportData.map((dataEntry, index) => (
-                        <div key={index} className='diagrams-chart-container'>
-                          <h4>
-                            Integrator:{' '}
-                            {integratorMap[dataEntry.integratorID] ||
-                                dataEntry.integratorID}
-                          </h4>
-                          <Line
-                              data={{
-                                labels: dataEntry.dataPoints.map(
-                                    (point) => new Date(point.SK)
-                                ),
-                                datasets: [
-                                  {
-                                    label: 'Total Crushed',
-                                    data: dataEntry.dataPoints.map(
-                                        (point) => point.totalCrushed
+                        {/* Wyświetlanie wykresów */}
+                        {reportData.map((dataEntry, index) => (
+                            <div key={index} className='diagrams-chart-container'>
+                              <h4>
+                                Integrator:{' '}
+                                {integratorMap[dataEntry.integratorID] ||
+                                    dataEntry.integratorID}
+                              </h4>
+                              <Line
+                                  data={{
+                                    labels: dataEntry.dataPoints.map(
+                                        (point) => new Date(point.SK)
                                     ),
-                                    fill: false,
-                                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                                    borderColor: 'rgba(54, 162, 235, 1)',
-                                  },
-                                ],
-                              }}
-                              options={{
-                                scales: {
-                                  x: {
-                                    type: 'time',
-                                    time: {
-                                      unit: 'minute',
+                                    datasets: [
+                                      {
+                                        label: 'Efektywność',
+                                        data: dataEntry.dataPoints.map(
+                                            (point) => point.totalCrushed
+                                        ),
+                                        fill: false,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                      },
+                                    ],
+                                  }}
+                                  options={{
+                                    scales: {
+                                      x: {
+                                        type: 'time',
+                                        time: {
+                                          unit: 'minute',
+                                        },
+                                      },
+                                      y: {
+                                        beginAtZero: true,
+                                      },
                                     },
-                                  },
-                                  y: {
-                                    beginAtZero: true,
-                                  },
-                                },
-                              }}
-                          />
-                        </div>
-                    ))}
-                  </div>
-              )}
-              <button className='diagrams-generate-pdf' onClick={generatePDF}>
-                Generuj PDF
-              </button>
+                                  }}
+                              />
+                            </div>
+                        ))}
+                      </div>
+                  )}
+                  <button className='diagrams-generate-pdf' onClick={generatePDF}>
+                    Generuj PDF
+                  </button>
+                </div>
+              </div>
             </div>
         )}
       </div>

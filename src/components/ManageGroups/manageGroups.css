@@ -36,8 +36,9 @@
   background-color: var(--primary-500);
   color: var(--whiteColor);
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .add-group-toggle button:hover {
@@ -65,7 +66,7 @@
   width: 100%;
   padding: 10px 40px 10px 15px;
   border: 1px solid var(--border-neutral);
-  border-radius: 5px;
+  border-radius: 8px;
 }
 
 .search-icon {
@@ -76,37 +77,88 @@
   color: var(--textColor);
 }
 
-/* Add new group form */
-.add-group-form {
+/* Add Group Modal */
+.modal-overlay-group {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
+  justify-content: center;
   align-items: center;
+  z-index: 2000;
+}
+
+.modal-content-group {
+  background: var(--whiteColor);
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  border: 2px solid var(--primary-500);
+}
+
+.modal-content-group h3 {
+  margin-top: 0;
+  font-size: 1.8rem;
+  color: var(--primary-700);
   margin-bottom: 20px;
 }
 
-.add-group-form input {
-  padding: 10px;
-  border: 1px solid var(--border-neutral);
-  border-radius: 5px;
-  margin-right: 10px;
-  flex: 1;
+.modal-field-group {
+  margin-bottom: 15px;
+  text-align: left;
 }
 
-.add-group-form button {
-  padding: 10px 20px;
+.modal-field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--blackColor);
+}
+
+.modal-field-group select,
+.modal-field-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-neutral);
+  border-radius: 8px;
+  font-size: var(--normalFontSize);
+}
+
+.modal-content-group button {
+  margin-top: 10px;
+  padding: 12px 20px;
   background-color: var(--primary-500);
   color: var(--whiteColor);
   border: none;
-  border-radius: 5px;
   cursor: pointer;
+  border-radius: 8px;
+  font-size: var(--normalFontSize);
+  transition: background-color 0.3s ease;
 }
 
-.add-group-form button:disabled {
+.modal-content-group button:hover {
+  background-color: var(--primary-700);
+}
+
+.modal-close-group {
+  background-color: var(--complementary-500);
+
+}
+
+.modal-close-group:hover {
+  background-color: var(--complementary-700);
+}
+
+.modal-content-group button:disabled {
   background-color: var(--border-neutral);
   cursor: not-allowed;
-}
-
-.add-group-form button:hover:not(:disabled) {
-  background-color: var(--primary-700);
 }
 
 /* Group list */
@@ -146,10 +198,7 @@
   color: var(--blackColor);
 }
 
-.group-icons {
-  display: flex;
-  gap: 10px;
-}
+
 
 .group-icon {
   cursor: pointer;
@@ -167,9 +216,36 @@
   margin-left: 8px;
   font-size: 1.2rem;
 }
+.group-options-icon {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
 
+.group-options-icon .group-icon {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--blackColor);
+  transition: color 0.3s ease;
+}
+
+.group-options-icon .group-icon:hover {
+  color: var(--primary-500);
+}
 .group-details {
   margin-top: 15px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .users-section,
@@ -203,110 +279,38 @@
   color: var(--textColor);
 }
 
-.options-menu {
+/* Zaktualizowany styl menu opcji */
+.options-menu-group {
   position: absolute;
   top: 40px;
   right: 10px;
   background: var(--whiteColor);
   border: 1px solid var(--border-neutral);
   border-radius: 4px;
-  z-index: 1000; /* Increased z-index */
+  z-index: 9999; /* Zwiększony z-index */
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.options-menu ul {
+.options-menu-group ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.options-menu li {
+.options-menu-group li {
   padding: 10px 15px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-.options-menu li:hover {
+.options-menu-group li:hover {
   background-color: var(--primary-100);
 }
 
-/* Modal styling */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.modal-content {
-  background: var(--whiteColor);
-  padding: 20px;
-  border-radius: 12px;
-  width: 500px;
-  max-width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  font-size: 1.5rem;
-  color: var(--primary-700);
-}
-
-.modal-field {
-  margin-bottom: 15px;
-}
-
-.modal-field label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.modal-field select,
-.modal-field input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--border-neutral);
-  border-radius: 5px;
-}
-
-.modal-content button {
-  margin-top: 10px;
-  padding: 10px 20px;
-  background-color: var(--primary-500);
-  color: var(--whiteColor);
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.modal-content button:hover {
-  background-color: var(--primary-700);
-}
-
-.modal-close {
-  background-color: var(--complementary-500);
-  margin-left: 10px;
-}
-
-.modal-close:hover {
-  background-color: var(--complementary-700);
-}
-
-.modal-content button:disabled {
-  background-color: var(--border-neutral);
-  cursor: not-allowed;
-}
-
+/* Loader */
 .loader-container {
-  margin-top: 40px;
+  margin-top: 20px;
   display: flex;
   justify-content: center;
   align-items: center;

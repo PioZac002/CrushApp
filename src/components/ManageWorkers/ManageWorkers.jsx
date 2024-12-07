@@ -34,7 +34,7 @@ const ManageWorkers = () => {
   const isService = user?.role?.isService;
   const isManager = user?.role?.isManager;
 
-  // Functions to display messages
+  // Funkcje do wyświetlania komunikatów
   const showSuccessMessage = (message) => {
     setSuccessMessage(message);
     setTimeout(() => {
@@ -49,7 +49,7 @@ const ManageWorkers = () => {
     }, 5000);
   };
 
-  // Fetch managers
+  // Pobierz managerów
   useEffect(() => {
     if (isService) {
       const fetchManagers = async () => {
@@ -63,7 +63,7 @@ const ManageWorkers = () => {
 
           if (response && response.data && response.data.workers) {
             const managerList = response.data.workers.filter(
-              (worker) => worker.role.isManager && !worker.isDeleted
+                (worker) => worker.role.isManager && !worker.isDeleted
             );
             setManagers(managerList);
           }
@@ -77,7 +77,7 @@ const ManageWorkers = () => {
     }
   }, [user, isService]);
 
-  // Fetch workers
+  // Pobierz pracowników
   useEffect(() => {
     const fetchWorkers = async () => {
       setLoading(true);
@@ -99,7 +99,7 @@ const ManageWorkers = () => {
     fetchWorkers();
   }, [user]);
 
-  // Add new worker
+  // Dodaj nowego pracownika
   const handleAddWorker = async () => {
     try {
       const requestBody = {
@@ -143,13 +143,13 @@ const ManageWorkers = () => {
       }
 
       const response = await axios.post(
-        endpoints.register(user.userID),
-        requestBody,
-        {
-          headers: {
-            Authorization: user.id_token,
-          },
-        }
+          endpoints.register(user.userID),
+          requestBody,
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
       );
 
       if (response && response.data) {
@@ -161,7 +161,7 @@ const ManageWorkers = () => {
           phone_number: '',
           address: '',
         });
-        setShowAddWorkerForm(false); // Ukryj formularz po dodaniu pracownika
+        setShowAddWorkerForm(false); // Ukryj modal po dodaniu pracownika
         showSuccessMessage('Pracownik został dodany pomyślnie.');
       }
     } catch (error) {
@@ -170,31 +170,31 @@ const ManageWorkers = () => {
     }
   };
 
-  // Function to change worker status (delete or restore)
+  // Funkcja zmiany statusu pracownika (usuń lub przywróć)
   const handleChangeWorkerStatus = async (workerID, isDeleted) => {
     try {
       const response = await axios.put(
-        endpoints.editWorker(user.userID),
-        {
-          userID: workerID,
-          editData: {
-            isDeleted: isDeleted,
+          endpoints.editWorker(user.userID),
+          {
+            userID: workerID,
+            editData: {
+              isDeleted: isDeleted,
+            },
           },
-        },
-        {
-          headers: {
-            Authorization: user.id_token,
-          },
-        }
+          {
+            headers: {
+              Authorization: user.id_token,
+            },
+          }
       );
 
       if (response && response.data) {
         setWorkers((prev) =>
-          prev.map((worker) =>
-            worker.PK === workerID
-              ? { ...worker, isDeleted: isDeleted }
-              : worker
-          )
+            prev.map((worker) =>
+                worker.PK === workerID
+                    ? { ...worker, isDeleted: isDeleted }
+                    : worker
+            )
         );
         if (isDeleted) {
           showSuccessMessage('Pracownik został usunięty pomyślnie.');
@@ -208,320 +208,328 @@ const ManageWorkers = () => {
     }
   };
 
-  // Filtering workers
+  // Filtrowanie pracowników
   const filteredWorkers = workers
-    .filter((worker) => {
-      if (filter === 'active') return !worker.isDeleted;
-      if (filter === 'deleted') return worker.isDeleted;
-      return true;
-    })
-    .filter((worker) => {
-      const givenNameAttr = worker.cognitoAttributes?.find(
-        (attr) => attr.Name === 'given_name'
-      );
-      const familyNameAttr = worker.cognitoAttributes?.find(
-        (attr) => attr.Name === 'family_name'
-      );
-      const givenName = givenNameAttr ? givenNameAttr.Value : '';
-      const familyName = familyNameAttr ? familyNameAttr.Value : '';
+      .filter((worker) => {
+        if (filter === 'active') return !worker.isDeleted;
+        if (filter === 'deleted') return worker.isDeleted;
+        return true;
+      })
+      .filter((worker) => {
+        const givenNameAttr = worker.cognitoAttributes?.find(
+            (attr) => attr.Name === 'given_name'
+        );
+        const familyNameAttr = worker.cognitoAttributes?.find(
+            (attr) => attr.Name === 'family_name'
+        );
+        const givenName = givenNameAttr ? givenNameAttr.Value : '';
+        const familyName = familyNameAttr ? familyNameAttr.Value : '';
 
-      const fullName = `${givenName} ${familyName}`.toLowerCase();
-      return fullName.includes(searchTerm.toLowerCase());
-    });
+        const fullName = `${givenName} ${familyName}`.toLowerCase();
+        return fullName.includes(searchTerm.toLowerCase());
+      });
 
   return (
-    <div className='manage-workers-container'>
-      {/* Top bar with add worker button, filter, and search */}
-      <div className='top-bar-workers'>
-        <div className='add-worker-toggle'>
-          <button onClick={() => setShowAddWorkerForm(!showAddWorkerForm)}>
-            {showAddWorkerForm ? 'Anuluj' : 'Dodaj nowego pracownika'}
-          </button>
-        </div>
+      <div className='manage-workers-container'>
+        {/* Górny pasek z przyciskiem dodawania pracownika, filtrem i wyszukiwaniem */}
+        <div className='top-bar-workers'>
+          <div className='add-worker-toggle'>
+            <button onClick={() => setShowAddWorkerForm(!showAddWorkerForm)}>
+              {showAddWorkerForm ? 'Anuluj' : 'Dodaj nowego pracownika'}
+            </button>
+          </div>
 
-        {/* Worker filter */}
-        <div className='filter-group'>
-          <label htmlFor='statusFilter'>Filtruj według statusu:</label>
-          <select
-            id='statusFilter'
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value='all'>Wszyscy</option>
-            <option value='active'>Aktywni</option>
-            <option value='deleted'>Usunięci</option>
-          </select>
-        </div>
+          {/* Filtr pracowników */}
+          <div className='filter-group'>
+            <label htmlFor='statusFilter'>Filtruj według statusu:</label>
+            <select
+                id='statusFilter'
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value='all'>Wszyscy</option>
+              <option value='active'>Aktywni</option>
+              <option value='deleted'>Usunięci</option>
+            </select>
+          </div>
 
-        {/* Worker search */}
-        <div className='search-bar-workers'>
-          <input
-            type='text'
-            placeholder='Szukaj pracownika...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <FaSearch className='search-icon-workers' />
-        </div>
-      </div>
-
-      {/* Add new worker form */}
-      {showAddWorkerForm && (
-        <>
-          <h2 className='section-title'>Dodaj nowego pracownika</h2>
-          <form
-            className='worker-form'
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddWorker();
-            }}
-          >
-            <div className='form-group'>
-              <label htmlFor='email'>Email</label>
-              <input
-                type='email'
-                id='email'
-                placeholder='Wprowadź email'
-                value={newWorker.email}
-                onChange={(e) =>
-                  setNewWorker({ ...newWorker, email: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className='form-group'>
-              <label htmlFor='given_name'>Imię</label>
-              <input
+          {/* Wyszukiwanie pracowników */}
+          <div className='search-bar-workers'>
+            <input
                 type='text'
-                id='given_name'
-                placeholder='Wprowadź imię'
-                value={newWorker.given_name}
-                onChange={(e) =>
-                  setNewWorker({ ...newWorker, given_name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className='form-group'>
-              <label htmlFor='family_name'>Nazwisko</label>
-              <input
-                type='text'
-                id='family_name'
-                placeholder='Wprowadź nazwisko'
-                value={newWorker.family_name}
-                onChange={(e) =>
-                  setNewWorker({ ...newWorker, family_name: e.target.value })
-                }
-                required
-              />
-            </div>
+                placeholder='Szukaj pracownika...'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <FaSearch className='search-icon-workers' />
+          </div>
+        </div>
 
-            {isService && (
-              <>
-                <div className='form-group'>
-                  <label>Rola:</label>
-                  <div className='radio-group'>
+        {/* Modal dodawania nowego pracownika */}
+        {showAddWorkerForm && (
+            <div className='modal-overlay-worker'>
+              <div className='modal-content-worker'>
+                <h2 className='modal-title'>Dodaj nowego pracownika</h2>
+                <form
+                    className='worker-form'
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAddWorker();
+                    }}
+                >
+                  <div className='form-group-worker'>
+                    <label htmlFor='email'>Email</label>
+                    <input
+                        type='email'
+                        id='email'
+                        placeholder='Wprowadź email'
+                        value={newWorker.email}
+                        onChange={(e) =>
+                            setNewWorker({ ...newWorker, email: e.target.value })
+                        }
+                        required
+                    />
+                  </div>
+                  <div className='form-group-worker'>
+                    <label htmlFor='given_name'>Imię</label>
+                    <input
+                        type='text'
+                        id='given_name'
+                        placeholder='Wprowadź imię'
+                        value={newWorker.given_name}
+                        onChange={(e) =>
+                            setNewWorker({ ...newWorker, given_name: e.target.value })
+                        }
+                        required
+                    />
+                  </div>
+                  <div className='form-group-worker'>
+                    <label htmlFor='family_name'>Nazwisko</label>
+                    <input
+                        type='text'
+                        id='family_name'
+                        placeholder='Wprowadź nazwisko'
+                        value={newWorker.family_name}
+                        onChange={(e) =>
+                            setNewWorker({ ...newWorker, family_name: e.target.value })
+                        }
+                        required
+                    />
+                  </div>
+
+                  {isService && (
+                      <>
+                        <div className='form-group-worker'>
+                          <label>Rola:</label>
+                          <div className='radio-group-worker'>
+                            <label>
+                              <input
+                                  type='radio'
+                                  name='role'
+                                  value='service'
+                                  checked={selectedRole === 'service'}
+                                  onChange={(e) => {
+                                    setSelectedRole(e.target.value);
+                                    setShowManagerSelect(false);
+                                  }}
+                              />
+                              Serwisant
+                            </label>
+                            <label>
+                              <input
+                                  type='radio'
+                                  name='role'
+                                  value='manager'
+                                  checked={selectedRole === 'manager'}
+                                  onChange={(e) => {
+                                    setSelectedRole(e.target.value);
+                                    setShowManagerSelect(false);
+                                  }}
+                              />
+                              Manager
+                            </label>
+                            <label>
+                              <input
+                                  type='radio'
+                                  name='role'
+                                  value=''
+                                  checked={selectedRole === ''}
+                                  onChange={() => {
+                                    setSelectedRole('');
+                                    setShowManagerSelect(true);
+                                  }}
+                              />
+                              Pracownik (bez roli)
+                            </label>
+                          </div>
+                        </div>
+
+                        {showManagerSelect && (
+                            <div className='form-group-worker'>
+                              <label htmlFor='manager'>Wybierz Managera</label>
+                              <select
+                                  id='manager'
+                                  value={selectedManagerID}
+                                  onChange={(e) => setSelectedManagerID(e.target.value)}
+                              >
+                                <option value=''>-- Wybierz Managera --</option>
+                                {managers.map((manager) => {
+                                  const givenNameAttr = manager.cognitoAttributes?.find(
+                                      (attr) => attr.Name === 'given_name'
+                                  );
+                                  const familyNameAttr = manager.cognitoAttributes?.find(
+                                      (attr) => attr.Name === 'family_name'
+                                  );
+                                  const givenName = givenNameAttr
+                                      ? givenNameAttr.Value
+                                      : 'N/A';
+                                  const familyName = familyNameAttr
+                                      ? familyNameAttr.Value
+                                      : 'N/A';
+
+                                  return (
+                                      <option key={manager.PK} value={manager.PK}>
+                                        {`${givenName} ${familyName}`}
+                                      </option>
+                                  );
+                                })}
+                              </select>
+                            </div>
+                        )}
+                      </>
+                  )}
+
+                  <div className='form-group-worker checkbox-group-worker'>
                     <label>
                       <input
-                        type='radio'
-                        name='role'
-                        value='service'
-                        checked={selectedRole === 'service'}
-                        onChange={(e) => {
-                          setSelectedRole(e.target.value);
-                          setShowManagerSelect(false);
-                        }}
+                          type='checkbox'
+                          id='optionalFields'
+                          checked={showOptionalFields}
+                          onChange={() => setShowOptionalFields((prev) => !prev)}
                       />
-                      Serwisant
-                    </label>
-                    <label>
-                      <input
-                        type='radio'
-                        name='role'
-                        value='manager'
-                        checked={selectedRole === 'manager'}
-                        onChange={(e) => {
-                          setSelectedRole(e.target.value);
-                          setShowManagerSelect(false);
-                        }}
-                      />
-                      Manager
-                    </label>
-                    <label>
-                      <input
-                        type='radio'
-                        name='role'
-                        value=''
-                        checked={selectedRole === ''}
-                        onChange={() => {
-                          setSelectedRole('');
-                          setShowManagerSelect(true);
-                        }}
-                      />
-                      Pracownik (bez roli)
+                      Opcjonalne dane
                     </label>
                   </div>
-                </div>
 
-                {showManagerSelect && (
-                  <div className='form-group'>
-                    <label htmlFor='manager'>Wybierz Managera</label>
-                    <select
-                      id='manager'
-                      value={selectedManagerID}
-                      onChange={(e) => setSelectedManagerID(e.target.value)}
-                    >
-                      <option value=''>-- Wybierz Managera --</option>
-                      {managers.map((manager) => {
-                        const givenNameAttr = manager.cognitoAttributes?.find(
-                          (attr) => attr.Name === 'given_name'
-                        );
-                        const familyNameAttr = manager.cognitoAttributes?.find(
-                          (attr) => attr.Name === 'family_name'
-                        );
-                        const givenName = givenNameAttr
-                          ? givenNameAttr.Value
-                          : 'N/A';
-                        const familyName = familyNameAttr
-                          ? familyNameAttr.Value
-                          : 'N/A';
+                  {showOptionalFields && (
+                      <>
+                        <div className='form-group-worker'>
+                          <label htmlFor='phone_number'>Numer telefonu</label>
+                          <input
+                              type='tel'
+                              id='phone_number'
+                              placeholder='Wprowadź numer telefonu'
+                              value={newWorker.phone_number}
+                              onChange={(e) =>
+                                  setNewWorker({
+                                    ...newWorker,
+                                    phone_number: e.target.value,
+                                  })
+                              }
+                          />
+                        </div>
+                        <div className='form-group-worker'>
+                          <label htmlFor='address'>Adres</label>
+                          <input
+                              type='text'
+                              id='address'
+                              placeholder='Wprowadź adres'
+                              value={newWorker.address}
+                              onChange={(e) =>
+                                  setNewWorker({ ...newWorker, address: e.target.value })
+                              }
+                          />
+                        </div>
+                      </>
+                  )}
 
-                        return (
-                          <option key={manager.PK} value={manager.PK}>
-                            {`${givenName} ${familyName}`}
-                          </option>
-                        );
-                      })}
-                    </select>
+                  <div className='form-group-worker'>
+                    <button type='submit' className='btn-submit-worker'>
+                      Dodaj pracownika
+                    </button>
                   </div>
-                )}
-              </>
-            )}
-
-            <div className='form-group checkbox-group'>
-              <label>
-                <input
-                  type='checkbox'
-                  id='optionalFields'
-                  checked={showOptionalFields}
-                  onChange={() => setShowOptionalFields((prev) => !prev)}
-                />
-                Opcjonalne dane
-              </label>
-            </div>
-
-            {showOptionalFields && (
-              <>
-                <div className='form-group'>
-                  <label htmlFor='phone_number'>Numer telefonu</label>
-                  <input
-                    type='tel'
-                    id='phone_number'
-                    placeholder='Wprowadź numer telefonu'
-                    value={newWorker.phone_number}
-                    onChange={(e) =>
-                      setNewWorker({
-                        ...newWorker,
-                        phone_number: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className='form-group'>
-                  <label htmlFor='address'>Adres</label>
-                  <input
-                    type='text'
-                    id='address'
-                    placeholder='Wprowadź adres'
-                    value={newWorker.address}
-                    onChange={(e) =>
-                      setNewWorker({ ...newWorker, address: e.target.value })
-                    }
-                  />
-                </div>
-              </>
-            )}
-
-            <div className='form-group'>
-              <button type='submit' className='btn-submit'>
-                Dodaj pracownika
-              </button>
-            </div>
-          </form>
-        </>
-      )}
-
-      <h2 className='section-title'>Lista Pracowników</h2>
-
-      {loading ? (
-        <div className='loader-container'>
-          <GridLoader color='var(--primary-500)' />
-        </div>
-      ) : (
-        <div className='worker-list'>
-          {filteredWorkers.map((worker) => {
-            const emailAttr = worker.cognitoAttributes?.find(
-              (attr) => attr.Name === 'email'
-            );
-            const givenNameAttr = worker.cognitoAttributes?.find(
-              (attr) => attr.Name === 'given_name'
-            );
-            const familyNameAttr = worker.cognitoAttributes?.find(
-              (attr) => attr.Name === 'family_name'
-            );
-
-            const email = emailAttr ? emailAttr.Value : 'N/A';
-            const givenName = givenNameAttr ? givenNameAttr.Value : 'N/A';
-            const familyName = familyNameAttr ? familyNameAttr.Value : 'N/A';
-
-            return (
-              <div
-                className={`worker-card ${
-                  worker.isDeleted ? 'card-inactive' : 'card-active'
-                }`}
-                key={worker.PK}
-              >
-                <h5>
-                  {givenName} {familyName}
-                </h5>
-                <p>Email: {email}</p>
-                <p>Status: {worker.isDeleted ? 'Usunięty' : 'Aktywny'}</p>
-                {!worker.isDeleted ? (
-                  <button
-                    className='btn-delete'
-                    onClick={() => handleChangeWorkerStatus(worker.PK, true)}
-                  >
-                    Usuń
-                  </button>
-                ) : (
-                  <button
-                    className='btn-restore'
-                    onClick={() => handleChangeWorkerStatus(worker.PK, false)}
-                  >
-                    Przywróć
-                  </button>
-                )}
+                </form>
+                <button
+                    className='modal-close-button-worker'
+                    onClick={() => setShowAddWorkerForm(false)}
+                >
+                  Anuluj
+                </button>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+        )}
 
-      {successMessage && (
-        <ToastContainer
-          message={successMessage}
-          onClose={() => setSuccessMessage('')}
-          variant='success'
-        />
-      )}
-      {errorMessage && (
-        <ToastContainer
-          message={errorMessage}
-          onClose={() => setErrorMessage('')}
-          variant='danger'
-        />
-      )}
-    </div>
+        <h2 className='section-title'>Lista Pracowników</h2>
+
+        {loading ? (
+            <div className='loader-container'>
+              <GridLoader color='var(--primary-500)' />
+            </div>
+        ) : (
+            <div className='worker-list'>
+              {filteredWorkers.map((worker) => {
+                const emailAttr = worker.cognitoAttributes?.find(
+                    (attr) => attr.Name === 'email'
+                );
+                const givenNameAttr = worker.cognitoAttributes?.find(
+                    (attr) => attr.Name === 'given_name'
+                );
+                const familyNameAttr = worker.cognitoAttributes?.find(
+                    (attr) => attr.Name === 'family_name'
+                );
+
+                const email = emailAttr ? emailAttr.Value : 'N/A';
+                const givenName = givenNameAttr ? givenNameAttr.Value : 'N/A';
+                const familyName = familyNameAttr ? familyNameAttr.Value : 'N/A';
+
+                return (
+                    <div
+                        className={`worker-card ${
+                            worker.isDeleted ? 'card-inactive' : 'card-active'
+                        }`}
+                        key={worker.PK}
+                    >
+                      <h5>
+                        {givenName} {familyName}
+                      </h5>
+                      <p>Email: {email}</p>
+                      <p>Status: {worker.isDeleted ? 'Usunięty' : 'Aktywny'}</p>
+                      {!worker.isDeleted ? (
+                          <button
+                              className='btn-delete'
+                              onClick={() => handleChangeWorkerStatus(worker.PK, true)}
+                          >
+                            Usuń
+                          </button>
+                      ) : (
+                          <button
+                              className='btn-restore'
+                              onClick={() => handleChangeWorkerStatus(worker.PK, false)}
+                          >
+                            Przywróć
+                          </button>
+                      )}
+                    </div>
+                );
+              })}
+            </div>
+        )}
+
+        {successMessage && (
+            <ToastContainer
+                message={successMessage}
+                onClose={() => setSuccessMessage('')}
+                variant='success'
+            />
+        )}
+        {errorMessage && (
+            <ToastContainer
+                message={errorMessage}
+                onClose={() => setErrorMessage('')}
+                variant='danger'
+            />
+        )}
+      </div>
   );
 };
 
