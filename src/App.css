@@ -2,27 +2,27 @@
 
 :root {
   /* Primary Colors */
-  --primary-900: #00730f;
-  --primary-800: #009525;
-  --primary-700: #0daa2f;
-  --primary-600: #35bf39;
-  --primary-500: #46cf41; /* główna wiodąca barwa */
-  --primary-400: #69d760;
-  --primary-300: #88df7e;
-  --primary-200: #ade8a4;
+  --primary-900: #006419;
+  --primary-800: #00842e;
+  --primary-700: #009639;
+  --primary-600: #00a845;
+  --primary-500: #00a845; /* główna wiodąca barwa */
+  --primary-400: #00b84f;
+  --primary-300: #41cf84;
+  --primary-200: #85dca8;
   --primary-100: #cef2c8;
-  --primary-50: #ebfae9;
+  --primary-50: #e9f3ea;
 
   /* Complementary Colors */
-  --complementary-900: #6700a7;
-  --complementary-800: #8900b3;
-  --complementary-700: #9b03ba;
-  --complementary-600: #b009c1;
-  --complementary-500: #bf0cc6;
-  --complementary-400: #ca41cf; /* główna wiodąca barwa */
-  --complementary-300: #d568d8;
-  --complementary-200: #e295e4;
-  --complementary-100: #edc0ee;
+  --complementary-900: #580c1f;
+  --complementary-800: #74121d;
+  --complementary-700: #a7333f;
+  --complementary-600: #c52233;
+  --complementary-500: #dd0426;
+  --complementary-400: #f02d3a; /* główna wiodąca barwa */
+  --complementary-300: #ee515b;
+  --complementary-200: #ea7a8c;
+  --complementary-100: #ea9fa8;
   --complementary-50: #f8e6f8;
 
   /* Analogous Colors (First Row) */
@@ -35,17 +35,17 @@
   --analogous-300: #b1de7e;
   --analogous-200: #c8e8a4;
   --analogous-100: #def1c8;
-  --analogous-50: #f2fae9;
+  --analogous-50: #1d3104;
   --analogous2-900: #006419;
   --analogous2-800: #00842e;
   --analogous2-700: #009639;
   --analogous2-600: #00a845;
   --analogous2-500: #00b84f;
-  --analogous2-400: #00c468;
+  --analogous2-400: #5bba6f;
   --analogous2-300: #41cf84; /* główna wiodąca barwa */
   --analogous2-200: #85dca8;
   --analogous2-100: #b7eaca;
-  --analogous2-50: #e1f7e9;
+  --analogous2-50: #a4f1b4;
 
   /* Triadic Colors (First Row) */
   --triadic-900: #004f3f;
@@ -72,9 +72,9 @@
   --triadic2-50: #e9e9fa;
   --background-neutral: #f5f5f5;
   --border-neutral: #e0e0e0;
-  --PrimaryColor: hsl(94, 59%, 35%);
-  --lightGreen: #8fe98c;
-  --HoverColor: #bdf094;
+  --PrimaryColor: #13AA5F;
+  --lightGreen: #67E26D;
+  --HoverColor: #439150;
   --paleGreen: hsl(96, 75%, 89%);
   --whiteColor: hsl(0, 0%, 100%);
   --blackColor: hsl(0, 0%, 18%);

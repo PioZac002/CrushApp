@@ -599,7 +599,7 @@ const Dashboard = () => {
                 <h5 className='container-title'>Wykresy</h5>
               </div>
               <div className='container-content'>
-                <p>Tutaj będzie miejsce na wykresy efektywności.</p>
+                <p>Miejsce na wykresy efektywności.</p>
               </div>
             </div>
           </div>
